@@ -7,9 +7,6 @@
 <style>
 /* Self-contained fonts - no external dependency */
 </style>
-<!-- Firebase SDK via script tags (não dynamic import) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 /* Mini CSV parser */
 const Papa={
@@ -571,15 +568,7 @@ function genDemo(){return[];}
 
 /* ═══ FIREBASE ═══ */
 /* ── FIREBASE SOM-AMBIENTAL (fixo) ── */
-const FB_CFG={
-  apiKey:'AIzaSyBWcGAa3CWurSiDs5udEtESGwCGGnYTX5Y',
-  authDomain:'brasa-pantanal.firebaseapp.com',
-  databaseURL:'https://brasa-pantanal-default-rtdb.firebaseio.com',
-  projectId:'brasa-pantanal',
-  storageBucket:'brasa-pantanal.firebasestorage.app',
-  messagingSenderId:'876718329822',
-  appId:'1:876718329822:web:e0e0254ee909a933dad74f'
-};
+const DB_URL='https://brasa-pantanal-default-rtdb.firebaseio.com';
 function openFBModal(){document.getElementById('ov').classList.add('on');}
 function closeOv(){document.getElementById('ov').classList.remove('on');}
 function setDot(c,t){
@@ -597,59 +586,45 @@ function setDot(c,t){
 
 function connectFB(){
   setDot('demo','● Conectando…');
-  /* Aguardar SDK carregar com retry */
-  var tries=0;
-  function tryConnect(){
-    tries++;
-    if(typeof firebase==='undefined'||typeof firebase.database==='undefined'){
-      if(tries<20){setTimeout(tryConnect,300);return;}
-      setDot('err','● Firebase indisponível');
-      toast('Firebase SDK não carregou. Usando sem dados.','w');
-      boot();return;
-    }
-    try{
-      if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
-      var db=firebase.database();
-      window._fb={db:db};
+  fetch(DB_URL+'/sopro/daily.json?shallow=true&limitToFirst=1')
+    .then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
       setDot('ok','● Firebase OK');
+      window._fb=true;
       loadFB();
-    }catch(e){
-      setDot('err','● Erro Firebase');
-      toast('Firebase: '+e.message,'w');
+    })
+    .catch(function(e){
+      setDot('err','● Sem conexão');
+      toast('Firebase indisponível: '+e.message,'w');
       boot();
-    }
-  }
-  setTimeout(tryConnect,200);
-}
-function loadFB(){
-  var db=window._fb.db;
-  var t=setTimeout(function(){
-    setDot('demo','● Sem dados');
-    toast('Firebase vazio — faça upload na aba Upload','w');
-    boot();
-  },6000);
-  db.ref('sopro/daily').orderByChild('date').limitToLast(1000).on('value',function(snap){
-    clearTimeout(t);
-    var r=[];
-    snap.forEach(function(c){r.push(c.val());});
-    if(!r.length){
-      setDot('demo','● Sem dados');
-      toast('Firebase vazio — faça upload na aba Upload','w');
-      boot();return;
-    }
-    r.sort(function(a,b){return a.date.localeCompare(b.date);});
-    ALL=r.map(function(d){return Object.assign({},d,{itp:d.itp!=null?d.itp:itp(d),ic:d.ic!=null?d.ic:ic(d)});});
-    FIL=ALL.slice();
-    setDot('ok','● '+ALL.length+' registros');
-    renderAll();updateCards();renderTable();
-    toast('✓ '+ALL.length+' registros carregados','ok');
-  },function(err){
-    clearTimeout(t);
-    toast('Erro Firebase: '+err.message,'w');
-    boot();
-  });
-}
-function boot(){
+    });
+}function loadFB(){
+  fetch(DB_URL+'/sopro/daily.json')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data){
+        setDot('demo','● Sem dados');
+        toast('Firebase vazio — faça upload na aba Upload','w');
+        boot();return;
+      }
+      var r=Object.values(data);
+      r.sort(function(a,b){return a.date.localeCompare(b.date);});
+      ALL=r.map(function(d){
+        return Object.assign({},d,{
+          itp:d.itp!=null?d.itp:itp(d),
+          ic:d.ic!=null?d.ic:ic(d)
+        });
+      });
+      FIL=ALL.slice();
+      setDot('ok','● '+ALL.length+' registros');
+      renderAll();updateCards();renderTable();
+      toast('✓ '+ALL.length+' registros carregados','ok');
+    })
+    .catch(function(e){
+      toast('Erro ao carregar dados: '+e.message,'w');
+      boot();
+    });
+}function boot(){
   ALL=[];FIL=[];
   setDot('demo','● Aguardando dados');
   showEmpty();
@@ -1445,8 +1420,8 @@ function deleteRow(date){
   const key=date.replace(/-/g,'');
   if(window._fb){
     const fb=window._fb;
-    window._fb.db.ref('sopro/daily/'+key).remove()
-      .then(function(){toast('Registro '+date+' apagado','ok');})
+    fetch(DB_URL+'/sopro/daily/'+key+'.json',{method:'DELETE'})
+      .then(function(){toast('Registro '+date+' apagado','ok');loadFB();})
       .catch(function(e){toast('Erro: '+e.message,'e');});
   }else{
     ALL=ALL.filter(function(d){return d.date!==date;});
@@ -1582,15 +1557,21 @@ function doFile(file){
       tentativas++;
     }
     if(window._fb){
-      window._fb.db.ref('sopro/daily').set(batch)
-        .then(function(){
-          toast('✓ '+ok+' registros salvos no Firebase!','ok');
-          if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
-        })
-        .catch(function(e){
-          toast('Erro Firebase: '+e.message,'e');
-          salvaLocal(batch,ok,sk);
-        });
+      fetch(DB_URL+'/sopro/daily.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(batch)
+      })
+      .then(function(r){
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        toast('✓ '+ok+' registros salvos no Firebase!','ok');
+        if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
+        loadFB();
+      })
+      .catch(function(e){
+        toast('Erro ao salvar: '+e.message,'e');
+        salvaLocal(batch,ok,sk);
+      });
     }else{
       salvaLocal(batch,ok,sk);
     }
