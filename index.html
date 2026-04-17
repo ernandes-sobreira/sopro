@@ -549,27 +549,7 @@ let ALL=[],FIL=[];
 function itp(d){const zt=(d.temp-30)/5,zp=((d.pm25||0)-15)/18;return +((zt+zp)/Math.SQRT2).toFixed(2);}
 function ic(d){if(!d.temp||!d.humidity)return null;const T=d.temp,R=d.humidity/100;return +(T+.348*(R*6.1*Math.exp(17.27*T/(237.3+T)))-4).toFixed(1);}
 
-function genDemo(){
-  const D=[],s0=new Date('2023-06-01');
-  const sm={0:'Chuvosa',1:'Chuvosa',2:'Chuvosa',3:'Trans.Chuva→Seca',4:'Trans.Chuva→Seca',
-            5:'Seca',6:'Seca',7:'Seca',8:'Seca',9:'Trans.Seca→Chuva',10:'Trans.Seca→Chuva',11:'Chuvosa'};
-  for(let i=0;i<700;i++){
-    const d=new Date(s0);d.setDate(d.getDate()+i);
-    const m=d.getMonth(),iS=m>=5&&m<=8,iO=m===9||m===10;
-    let pm=(iS?22:(iO?14:6))+Math.random()*8;
-    if(iS&&Math.random()<.07)pm+=Math.random()*140;
-    const tp=(iS?27.5:(iO?30:31))+Math.random()*10-2;
-    const hu=(iS?44:73)+Math.random()*22-5;
-    const co=428+(hu<55?13:4)+Math.sin(i/28)*7+Math.random()*20;
-    const v={date:d.toISOString().slice(0,10),pm25:+pm.toFixed(1),co2:+co.toFixed(0),
-             temp:+tp.toFixed(1),humidity:+hu.toFixed(0),
-             temp_max:+(tp+4.2+Math.random()*2.8).toFixed(1),
-             temp_min:+(tp-5.1-Math.random()*2.5).toFixed(1),season:sm[m]};
-    v.itp=itp(v);v.ic=ic(v);
-    D.push(v);
-  }
-  return D;
-}
+function genDemo(){return[];}
 
 /* ═══ FIREBASE ═══ */
 /* ── FIREBASE SOM-AMBIENTAL (fixo) ── */
@@ -609,7 +589,7 @@ function loadFB(){
   const q=query(ref(db,'sopro/daily'),orderByChild('date'),limitToLast(1000));
   onValue(q,snap=>{
     const r=[];snap.forEach(c=>r.push(c.val()));
-    if(!r.length){toast('Nenhum dado no Firebase — usando armazenamento local','w');boot();return;}
+    if(!r.length){setDot('demo','● Sem dados');toast('Firebase conectado! Vá na aba Upload e envie seu CSV.','w');boot();return;}
     r.sort((a,b)=>a.date.localeCompare(b.date));
     ALL=r.map(d=>({...d,itp:d.itp??itp(d),ic:d.ic??ic(d)}));
     FIL=[...ALL];renderAll();updateCards();
@@ -617,11 +597,29 @@ function loadFB(){
   },err=>{toast('Erro FB: '+err.message,'e');boot();});
 }
 function boot(){
-  ALL=genDemo();
-  FIL=[...ALL];
-  setDot('demo','● Modo Demo — faça upload dos seus dados');
-  updateCards();
-  setTimeout(()=>renderAll(),80);
+  ALL=[];FIL=[];
+  setDot('demo','● Aguardando dados');
+  showEmpty();
+}
+function showEmpty(){
+  /* Limpa todos os gráficos e mostra mensagem */
+  const ids=['wrap-pm25','wrap-co2','wrap-temp','wrap-hum','wrap-pm-bp','wrap-te-bp',
+    'wrap-corr','wrap-tu','wrap-itp-ts','wrap-itp-bp','wrap-itp-st','wrap-itp-mbp',
+    'wrap-itp-hm','wrap-quad','wrap-q-bar','wrap-hw-t','wrap-hw-an','wrap-ic-bp',
+    'wrap-ic-st','wrap-ic-hm'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:13px;font-style:italic;flex-direction:column;gap:8px"><span style="font-size:2rem;opacity:.3">📤</span><span>Sem dados — faça upload na aba <strong>Upload</strong></span></div>';
+  });
+  /* Zera cards */
+  ['c-pm','c-co','c-te','c-hu','c-it'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+  document.getElementById('c-se').textContent='—';
+  document.getElementById('h-n').textContent='0';
+  document.getElementById('h-max').textContent='—';
+  document.getElementById('h-crit').textContent='—';
+  document.getElementById('h-per').textContent='—';
+  document.getElementById('alrt-t').innerHTML='Nenhum dado carregado. Vá em <strong>Upload</strong> e envie seu CSV.';
+  document.getElementById('alrt').className='alrt y';
 }
 
 /* ═══ NAV ═══ */
@@ -661,7 +659,7 @@ function applyF(){
 
 /* ═══ CARDS ═══ */
 function updateCards(){
-  const D=ALL;if(!D.length)return;
+  const D=ALL;if(!D.length){showEmpty();return;}
   const avg=k=>{const a=D.filter(d=>d[k]!=null);return a.length?a.reduce((s,d)=>s+d[k],0)/a.length:null;};
   const f=(v,n=1)=>v!=null?v.toFixed(n):'—';
   document.getElementById('c-pm').textContent=f(avg('pm25'));
@@ -1246,7 +1244,7 @@ function addDragSelect(svgId,wrapId,pad,L,Ds){
    PAINEL
 ════════════════════════════════════════════ */
 function renderPainel(){
-  const D=FIL;if(!D.length)return;
+  const D=FIL;if(!D.length){showEmpty();return;}
   svgTimeSeries(D,'pm25',C.r,[{v:15,c:C.a,label:'PI1=15'},{v:25,c:C.r,label:'PI2=25'}],'wrap-pm25','svg-pm25');
   svgLine(D,'co2',C.g,'wrap-co2','svg-co2','ppm');
   svgLine(D,'temp',C.o,'wrap-temp','svg-temp','°C');
@@ -1273,7 +1271,7 @@ function renderPainel(){
    ANÁLISE
 ════════════════════════════════════════════ */
 function renderAnalise(){
-  const D=FIL;if(!D.length)return;
+  const D=FIL;if(!D.length){showEmpty();return;}
 
   /* ITP series */
   svgTimeSeries(D,'itp',C.b,
@@ -1298,10 +1296,13 @@ function renderAnalise(){
   svgBoxplot(MOS,itpMBP,MC,'wrap-itp-mbp','svg-itp-mbp','ITP',null,null,[{v:1,c:C.a,dash:'5,3',label:'Alerta'},{v:2,c:C.r,dash:'4,3',label:'Crítico'}]);
 
   /* ITP heatmap */
-  const hZ=[[null,-0.8,-1.2,-0.1,0.3,0.6,0.5,-0.1,null,null,null,null],
-             [-0.2,0.2,0.4,0.1,-0.7,-0.5,-1.5,-0.3,2.7,1.0,0.1,-0.5],
-             [-0.4,-0.7,-0.5,-1.4,null,null,null,null,null,null,null,null]];
-  svgHeatmap(hZ,MOS,['2023','2024','2025'],'wrap-itp-hm','svg-itp-hm','RdBu',-2,3);
+  /* ITP heatmap: build from real data by year×month */
+  const years=[...new Set(D.map(d=>d.date.slice(0,4)))].sort();
+  const hZ=years.map(y=>MOS.map((_,m)=>{
+    const a=D.filter(d=>d.date.slice(0,4)===y&&new Date(d.date).getMonth()===m).map(d=>d.itp??calcITP(d));
+    return a.length?+(a.reduce((s,v)=>s+v,0)/a.length).toFixed(2):null;
+  }));
+  if(hZ.length) svgHeatmap(hZ,MOS,years,'wrap-itp-hm','svg-itp-hm','RdBu',-2,3);
 
   /* Quadrant scatter */
   svgScatter(SEAS.map(s=>({label:s,color:C.seas[s],
@@ -1325,7 +1326,7 @@ function renderAnalise(){
    ONDAS DE CALOR
 ════════════════════════════════════════════ */
 function renderOndas(){
-  const D=FIL;if(!D.length)return;
+  const D=FIL;if(!D.length){showEmpty();return;}
   const ref=D.map(d=>CLIM[new Date(d.date).getMonth()]);
   const anom=D.map((d,i)=>d.temp!=null?+(d.temp-ref[i]).toFixed(2):null);
   const Danom=D.map((d,i)=>({...d,anom:anom[i]}));
@@ -1491,14 +1492,23 @@ function doFile(file){
       d.itp=itp(d);d.ic=ic(d);batch[d.date.replace(/-/g,'')]=d;ok++;
     }
     if(window._fb){
-      const{ref,set,db}=window._fb;await set(ref(db,'sopro/daily'),batch);
-      toast('✓ '+ok+' registros no Firebase','ok');
+      try{
+        const{ref,set,db}=window._fb;
+        await set(ref(db,'sopro/daily'),batch);
+        toast('✓ '+ok+' registros salvos no Firebase!','ok');
+        if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
+        /* Firebase onValue dispara automaticamente e atualiza a tela */
+      }catch(e){
+        toast('Erro Firebase: '+e.message+' — carregando local','e');
+        ALL=Object.values(batch).sort((a,b)=>a.date.localeCompare(b.date));
+        FIL=[...ALL];renderAll();updateCards();
+      }
     }else{
       ALL=Object.values(batch).sort((a,b)=>a.date.localeCompare(b.date));
       FIL=[...ALL];renderAll();updateCards();
-      toast('✓ '+ok+' registros carregados','w');
+      toast('Firebase indisponível — dados carregados localmente','w');
+      if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
     }
-    if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
   },error:e=>toast('Erro CSV: '+e.message,'e')});
 }
 
@@ -1516,17 +1526,8 @@ function toast(msg,type='ok'){
 ════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('d-to').value=new Date().toISOString().slice(0,10);
-  const s=JSON.parse(localStorage.getItem('sopro_fb')||'{}');
-  if(s.api&&s.db){
-    ['api','db','pid','aid'].forEach(k=>{if(s[k])document.getElementById('f-'+k).value=s[k];});
-    setDot('demo','● Reconectando…');
-    connectFB();
-  }else{
-    /* Double rAF: wait for layout, then render */
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      boot();
-    }));
-  }
+  setDot('demo','● Conectando…');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>connectFB()));
   let resizeT;
   window.addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(renderAll,250);});
 });
