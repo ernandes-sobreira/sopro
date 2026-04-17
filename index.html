@@ -464,20 +464,36 @@ footer{background:#1c1e22;border-top:1px solid #2d3748;padding:.9rem 1rem;
   <div style="max-width:720px;margin:.9rem auto">
     <div class="sh"><div class="sh-t">Upload de Dados</div><div class="sh-hr"></div></div>
     <div class="sd"><strong>Obrigatórias:</strong> date (AAAA-MM-DD) · pm25 · co2 · temp · humidity. <strong>Opcionais:</strong> temp_max · temp_min · season.</div>
+
+    <!-- Status Firebase -->
+    <div id="up-status" style="background:#f0f7ff;border:1.5px solid var(--blue);border-radius:8px;padding:.65rem 1rem;margin-bottom:.8rem;font-size:12px;color:#1e40af;display:flex;align-items:center;gap:8px">
+      <span id="up-status-dot" style="width:8px;height:8px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>
+      <span id="up-status-txt">Conectando ao Firebase…</span>
+    </div>
+
     <div class="upz" ondragover="event.preventDefault()" ondrop="doDrop(event)">
       <input type="file" accept=".csv" onchange="doFile(this.files[0])">
       <div style="font-size:2.2rem;opacity:.3;margin-bottom:.4rem">📤</div>
       <div style="font-size:.88rem;font-weight:600">Arraste o CSV ou clique aqui</div>
-      <div style="font-size:11px;color:var(--muted)">Separador vírgula · UTF-8</div>
+      <div style="font-size:11px;color:var(--muted)">Separador vírgula · UTF-8 · substitui todos os dados anteriores</div>
     </div>
-    <div style="text-align:center;margin:.7rem 0">
-      <button class="m-pr" style="max-width:170px" onclick="dlTpl()">⬇ Modelo CSV</button>
+
+    <div style="display:flex;gap:8px;margin:.7rem 0;flex-wrap:wrap">
+      <button class="m-pr" style="flex:1;min-width:140px" onclick="dlTpl()">⬇ Modelo CSV</button>
+      <button onclick="clearData()" style="flex:1;min-width:140px;background:#fee2e2;border:1.5px solid #fca5a5;color:#991b1b;padding:7px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit">
+        🗑 Apagar todos os dados
+      </button>
     </div>
+
     <div style="height:1px;background:var(--border);margin:.9rem 0"></div>
-    <div class="sh"><div class="sh-t" style="font-size:.88rem">Últimos Registros</div><div class="sh-hr"></div></div>
+    <div class="sh">
+      <div class="sh-t" style="font-size:.88rem">Registros no Firebase</div>
+      <div class="sh-hr"></div>
+      <span id="tb-count" style="font-size:11px;color:var(--muted);white-space:nowrap;margin-left:8px">0 registros</span>
+    </div>
     <div class="tw">
       <table class="tbl">
-        <thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th><th>IC</th><th>Qualidade</th></tr></thead>
+        <thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th><th>IC</th><th>Qualidade</th><th>Ação</th></tr></thead>
         <tbody id="tb-body"></tbody>
       </table>
     </div>
@@ -489,7 +505,7 @@ footer{background:#1c1e22;border-top:1px solid #2d3748;padding:.9rem 1rem;
   <div style="max-width:1100px;margin:.9rem auto">
     <div class="sh"><div class="sh-t">Equipe do Projeto</div><div class="sh-hr"></div></div>
     <div class="tg">
-      <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🎓</div><div class="t-role">Coordenador</div><div class="t-name">Prof. Dr. Ernandes Sobreira Oliveira Junior</div><div class="t-info">Biólogo · Professor UNEMAT Cáceres<br>PPGCA · ProfÁgua · Licenciatura Biologia<br>Doutor Radboud University (NL)<br>Consultor UNESCO SA-1383/2025<br>+100 artigos · Japuíra Consultoria</div></div>
+      <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🎓</div><div class="t-role">Coordenador</div><div class="t-name">Prof. Dr. Ernandes Sobreira Oliveira Junior</div><div class="t-info">Prof. Coordenador do Projeto SOPRO<br>UNEMAT · Campus Cáceres-MT<br>PPGCA · ProfÁgua · Licenciatura em Biologia</div></div>
       <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🔬</div><div class="t-role">Doutorando</div><div class="t-name">Cleverson Ricardo Soares Viana</div><div class="t-info">PPGCA · UNEMAT Cáceres-MT</div></div>
       <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🌿</div><div class="t-role">Pesquisadora</div><div class="t-name">Maísa Consuelo dos Santos</div><div class="t-info">PPGCA · UNEMAT Cáceres-MT</div></div>
       <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">💡</div><div class="t-role">Iniciação Científica</div><div class="t-name">Danielle Ferreira Dias</div><div class="t-info">Licenciatura Ciências Biológicas<br>UNEMAT Cáceres-MT</div></div>
@@ -564,7 +580,18 @@ const FB_CFG={
 };
 function openFBModal(){document.getElementById('ov').classList.add('on');}
 function closeOv(){document.getElementById('ov').classList.remove('on');}
-function setDot(c,t){document.getElementById('fb-dot').className='dot '+c;document.getElementById('fb-lbl').textContent=t;}
+function setDot(c,t){
+  document.getElementById('fb-dot').className='dot '+c;
+  document.getElementById('fb-lbl').textContent=t;
+  /* Also update upload page status */
+  const upDot=document.getElementById('up-status-dot');
+  const upTxt=document.getElementById('up-status-txt');
+  if(upDot&&upTxt){
+    upDot.style.background=c==='ok'?'#27ae60':c==='err'?'#c0392b':'#e8a020';
+    upTxt.textContent=c==='ok'?'Firebase conectado — pronto para upload':
+                      c==='err'?'Sem conexão com Firebase':'Conectando ao Firebase…';
+  }
+}
 
 async function connectFB(){
   setDot('demo','● Conectando…');
@@ -591,7 +618,7 @@ function loadFB(){
     if(!r.length){setDot('demo','● Sem dados');toast('Firebase conectado! Vá na aba Upload e envie seu CSV.','w');boot();return;}
     r.sort((a,b)=>a.date.localeCompare(b.date));
     ALL=r.map(d=>({...d,itp:d.itp??itp(d),ic:d.ic??ic(d)}));
-    FIL=[...ALL];renderAll();updateCards();
+    FIL=[...ALL];renderAll();updateCards();renderTable();
     toast('✓ '+ALL.length+' registros do Firebase','ok');
   },err=>{toast('Erro FB: '+err.message,'e');boot();});
 }
@@ -1370,16 +1397,34 @@ function renderOndas(){
    TABLE
 ════════════════════════════════════════════ */
 function renderTable(){
-  const tbody=document.getElementById('tb-body');if(!tbody||!ALL.length)return;
-  const r=[...ALL].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,25);
+  const tbody=document.getElementById('tb-body');if(!tbody)return;
+  const cnt=document.getElementById('tb-count');
+  if(cnt)cnt.textContent=ALL.length+' registros';
+  if(!ALL.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:1rem;color:#9ca3af;font-style:italic">Nenhum dado. Faça upload do CSV.</td></tr>';return;}
+  const r=[...ALL].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,50);
   tbody.innerHTML=r.map(d=>{
     const p=d.pm25?.toFixed(1)||'—';
     const icv=d.ic?.toFixed(1)||'—';
     const rsk=d.pm25>60?'<span class="rsk rx">Péssima</span>':d.pm25>25?'<span class="rsk rh">Alta</span>':d.pm25>10?'<span class="rsk rm">Mod.</span>':'<span class="rsk rok">Boa</span>';
-    return `<tr><td>${d.date}</td><td>${p}</td><td>${d.co2?.toFixed(0)||'—'}</td><td>${d.temp?.toFixed(1)||'—'}</td><td>${d.humidity?.toFixed(0)||'—'}</td><td>${d.season||'—'}</td><td>${icv}</td><td>${rsk}</td></tr>`;
+    const del='<button onclick="deleteRow(''+d.date+'')" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:2px 7px;border-radius:4px;cursor:pointer;font-size:10px;font-family:inherit">✕</button>';
+    return'<tr><td>'+d.date+'</td><td>'+p+'</td><td>'+(d.co2?.toFixed(0)||'—')+'</td><td>'+(d.temp?.toFixed(1)||'—')+'</td><td>'+(d.humidity?.toFixed(0)||'—')+'</td><td>'+(d.season||'—')+'</td><td>'+icv+'</td><td>'+rsk+'</td><td>'+del+'</td></tr>';
   }).join('');
 }
-
+function deleteRow(date){
+  if(!confirm('Apagar registro de '+date+'?'))return;
+  const key=date.replace(/-/g,'');
+  if(window._fb){
+    const fb=window._fb;
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
+      .then(function(m){return m.remove(fb.ref(fb.db,'sopro/daily/'+key));})
+      .then(function(){toast('Registro '+date+' apagado','ok');})
+      .catch(function(e){toast('Erro: '+e.message,'e');});
+  }else{
+    ALL=ALL.filter(function(d){return d.date!==date;});
+    FIL=[...ALL];renderTable();renderAll();updateCards();
+    toast('Registro '+date+' removido','w');
+  }
+}
 /* ════════════════════════════════════════════
    DOWNLOADS
 ════════════════════════════════════════════ */
