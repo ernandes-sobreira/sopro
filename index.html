@@ -595,32 +595,61 @@ function setDot(c,t){
 
 async function connectFB(){
   setDot('demo','● Conectando…');
+  /* Timeout: se não conectar em 6s, mostra tela vazia */
+  const timeout=setTimeout(()=>{
+    if(!window._fb){
+      setDot('err','● Sem Firebase');
+      toast('Firebase não respondeu. Abrindo sem dados.','w');
+      boot();
+    }
+  },6000);
   try{
-    const{initializeApp,getApps,getApp}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-    const{getDatabase,ref,onValue,query,orderByChild,limitToLast,set}=
-      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const[{initializeApp,getApps,getApp},{getDatabase,ref,onValue,query,orderByChild,limitToLast,set}]=
+      await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
+      ]);
+    clearTimeout(timeout);
     const app=getApps().length?getApp():initializeApp(FB_CFG);
     const fdb=getDatabase(app);
     window._fb={ref,onValue,query,orderByChild,limitToLast,set,db:fdb};
     setDot('ok','● Firebase OK');
     loadFB();
   }catch(e){
+    clearTimeout(timeout);
     setDot('err','● Sem conexão');
-    toast('Sem conexão com Firebase. Verifique a internet.','e');
+    toast('Firebase indisponível.','w');
     boot();
   }
 }
 function loadFB(){
   const{ref,onValue,query,orderByChild,limitToLast,db}=window._fb;
   const q=query(ref(db,'sopro/daily'),orderByChild('date'),limitToLast(1000));
+  /* Timeout: se dados não chegarem em 5s, mostra tela vazia */
+  const t=setTimeout(()=>{
+    setDot('demo','● Sem dados');
+    toast('Firebase vazio — faça upload na aba Upload','w');
+    boot();
+  },5000);
   onValue(q,snap=>{
+    clearTimeout(t);
     const r=[];snap.forEach(c=>r.push(c.val()));
-    if(!r.length){setDot('demo','● Sem dados');toast('Firebase conectado! Vá na aba Upload e envie seu CSV.','w');boot();return;}
+    if(!r.length){
+      setDot('demo','● Sem dados');
+      toast('Firebase vazio — faça upload na aba Upload','w');
+      boot();return;
+    }
     r.sort((a,b)=>a.date.localeCompare(b.date));
     ALL=r.map(d=>({...d,itp:d.itp??itp(d),ic:d.ic??ic(d)}));
-    FIL=[...ALL];renderAll();updateCards();renderTable();
-    toast('✓ '+ALL.length+' registros do Firebase','ok');
-  },err=>{toast('Erro FB: '+err.message,'e');boot();});
+    FIL=[...ALL];
+    setDot('ok','● '+ALL.length+' registros');
+    renderAll();updateCards();renderTable();
+    toast('✓ '+ALL.length+' registros carregados','ok');
+  },err=>{
+    clearTimeout(t);
+    toast('Erro Firebase: '+err.message,'w');
+    boot();
+  });
 }
 function boot(){
   ALL=[];FIL=[];
@@ -649,11 +678,11 @@ function showEmpty(){
 }
 
 /* ═══ NAV ═══ */
-function goPage(id,btn){
+function goPage(id,el){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
+  if(el&&el.classList)el.classList.add('on');
   requestAnimationFrame(()=>{
     if(id==='analise')renderAnalise();
     if(id==='ondas')renderOndas();
