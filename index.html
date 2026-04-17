@@ -567,22 +567,21 @@ function closeOv(){document.getElementById('ov').classList.remove('on');}
 function setDot(c,t){document.getElementById('fb-dot').className='dot '+c;document.getElementById('fb-lbl').textContent=t;}
 
 async function connectFB(){
-  const api=document.getElementById('f-api').value.trim(),db=document.getElementById('f-db').value.trim();
-  const pid=document.getElementById('f-pid').value.trim(),aid=document.getElementById('f-aid').value.trim();
-  if(!api||!db){document.getElementById('m-st').textContent='⚠ Preencha API Key e Database URL';return;}
-  document.getElementById('m-st').textContent='⏳ Conectando…';
-  localStorage.setItem('sopro_fb',JSON.stringify({api,db,pid,aid}));
+  setDot('demo','● Conectando…');
   try{
     const{initializeApp,getApps,getApp}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-    const{getDatabase,ref,onValue,query,orderByChild,limitToLast,set}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-    const cfg={apiKey:api,authDomain:pid+'.firebaseapp.com',databaseURL:db,projectId:pid,storageBucket:pid+'.appspot.com',appId:aid};
-    const app=getApps().length?getApp():initializeApp(cfg);
+    const{getDatabase,ref,onValue,query,orderByChild,limitToLast,set}=
+      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const app=getApps().length?getApp():initializeApp(FB_CFG);
     const fdb=getDatabase(app);
     window._fb={ref,onValue,query,orderByChild,limitToLast,set,db:fdb};
-    setDot('ok','● Conectado');
-    document.getElementById('m-st').textContent='✓ OK!';
-    closeOv();loadFB();
-  }catch(e){document.getElementById('m-st').textContent='❌ '+e.message;setDot('err','● Erro');}
+    setDot('ok','● Firebase OK');
+    loadFB();
+  }catch(e){
+    setDot('err','● Sem conexão');
+    toast('Sem conexão com Firebase. Verifique a internet.','e');
+    boot();
+  }
 }
 function loadFB(){
   const{ref,onValue,query,orderByChild,limitToLast,db}=window._fb;
@@ -1479,17 +1478,34 @@ function dlTpl(){
 ════════════════════════════════════════════ */
 function doDrop(e){e.preventDefault();doFile(e.dataTransfer.files[0]);}
 function doFile(file){
-  if(!file)return;toast('Processando '+file.name+'…','ok');
+  if(!file)return;
+  toast('Processando '+file.name+'…','ok');
   Papa.parse(file,{header:true,skipEmptyLines:true,complete:async res=>{
     const sm=m=>[11,0,1,2].includes(m)?'Chuvosa':[3,4].includes(m)?'Trans.Chuva→Seca':[5,6,7,8].includes(m)?'Seca':'Trans.Seca→Chuva';
     let ok=0,sk=0;const batch={};
     for(const row of res.data){
       if(!row.date){sk++;continue;}
-      const d={date:row.date.trim(),pm25:parseFloat(row.pm25)||null,co2:parseFloat(row.co2)||null,
-               temp:parseFloat(row.temp)||null,humidity:parseFloat(row.humidity)||null,
-               temp_max:parseFloat(row.temp_max)||null,temp_min:parseFloat(row.temp_min)||null,
-               season:row.season?.trim()||sm(new Date(row.date).getMonth())};
-      d.itp=itp(d);d.ic=ic(d);batch[d.date.replace(/-/g,'')]=d;ok++;
+      const d={
+        date:row.date.trim(),
+        pm25:parseFloat(row.pm25)||null,
+        co2:parseFloat(row.co2)||null,
+        temp:parseFloat(row.temp)||null,
+        humidity:parseFloat(row.humidity)||null,
+        temp_max:parseFloat(row.temp_max)||null,
+        temp_min:parseFloat(row.temp_min)||null,
+        season:row.season?.trim()||sm(new Date(row.date).getMonth())
+      };
+      d.itp=itp(d);d.ic=ic(d);
+      batch[d.date.replace(/-/g,'')]=d;
+      ok++;
+    }
+    if(!ok){toast('Nenhum registro válido no CSV','e');return;}
+    toast('✓ '+ok+' registros processados. Salvando…','ok');
+    /* Se Firebase ainda não conectou, aguarda até 10s */
+    let tentativas=0;
+    while(!window._fb && tentativas<20){
+      await new Promise(r=>setTimeout(r,500));
+      tentativas++;
     }
     if(window._fb){
       try{
@@ -1497,19 +1513,20 @@ function doFile(file){
         await set(ref(db,'sopro/daily'),batch);
         toast('✓ '+ok+' registros salvos no Firebase!','ok');
         if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
-        /* Firebase onValue dispara automaticamente e atualiza a tela */
       }catch(e){
-        toast('Erro Firebase: '+e.message+' — carregando local','e');
-        ALL=Object.values(batch).sort((a,b)=>a.date.localeCompare(b.date));
-        FIL=[...ALL];renderAll();updateCards();
+        toast('Erro Firebase: '+e.message,'e');
+        salvaLocal(batch,ok,sk);
       }
     }else{
-      ALL=Object.values(batch).sort((a,b)=>a.date.localeCompare(b.date));
-      FIL=[...ALL];renderAll();updateCards();
-      toast('Firebase indisponível — dados carregados localmente','w');
-      if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
+      salvaLocal(batch,ok,sk);
     }
   },error:e=>toast('Erro CSV: '+e.message,'e')});
+}
+function salvaLocal(batch,ok,sk){
+  ALL=Object.values(batch).sort((a,b)=>a.date.localeCompare(b.date));
+  FIL=[...ALL];renderAll();updateCards();
+  toast('Dados carregados localmente (Firebase indisponível)','w');
+  if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
 }
 
 /* ════════════════════════════════════════════
