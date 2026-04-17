@@ -271,7 +271,7 @@ footer{background:#1c1e22;border-top:1px solid #2d3748;padding:.9rem 1rem;
 </nav>
 
 <!-- ALERT -->
-<div class="alrt g" id="alrt"><span id="alrt-t">Carregando dados…</span></div>
+<div class="alrt y" id="alrt"><span id="alrt-t">Aguardando dados — faça upload na aba Upload.</span></div>
 
 <!-- HERO -->
 <div class="hero">
@@ -1617,8 +1617,11 @@ function toast(msg,type='ok'){
 ════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('d-to').value=new Date().toISOString().slice(0,10);
+  /* Mostrar tela vazia IMEDIATAMENTE */
+  boot();
+  /* Conectar Firebase em background */
   setDot('demo','● Conectando…');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>connectFB()));
+  setTimeout(()=>connectFB(), 100);
   let resizeT;
   window.addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(renderAll,250);});
 });
