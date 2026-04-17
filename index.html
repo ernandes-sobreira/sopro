@@ -7,6 +7,9 @@
 <style>
 /* Self-contained fonts - no external dependency */
 </style>
+<!-- Firebase SDK via script tags (não dynamic import) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 /* Mini CSV parser */
 const Papa={
@@ -592,59 +595,54 @@ function setDot(c,t){
   }
 }
 
-async function connectFB(){
+function connectFB(){
   setDot('demo','● Conectando…');
-  /* Timeout: se não conectar em 6s, mostra tela vazia */
-  const timeout=setTimeout(()=>{
+  var timeout=setTimeout(function(){
     if(!window._fb){
       setDot('err','● Sem Firebase');
-      toast('Firebase não respondeu. Abrindo sem dados.','w');
+      toast('Firebase não respondeu. Sem dados.','w');
       boot();
     }
-  },6000);
+  },8000);
   try{
-    const[{initializeApp,getApps,getApp},{getDatabase,ref,onValue,query,orderByChild,limitToLast,set}]=
-      await Promise.all([
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
-      ]);
+    /* Usar Firebase Compat SDK (carregado via <script> no head) */
+    if(!firebase||!firebase.app){throw new Error('Firebase SDK não carregou');}
+    var app=firebase.apps.length?firebase.app():firebase.initializeApp(FB_CFG);
+    var db=firebase.database();
+    window._fb={db:db};
     clearTimeout(timeout);
-    const app=getApps().length?getApp():initializeApp(FB_CFG);
-    const fdb=getDatabase(app);
-    window._fb={ref,onValue,query,orderByChild,limitToLast,set,db:fdb};
     setDot('ok','● Firebase OK');
     loadFB();
   }catch(e){
     clearTimeout(timeout);
     setDot('err','● Sem conexão');
-    toast('Firebase indisponível.','w');
+    toast('Firebase: '+e.message,'w');
     boot();
   }
 }
 function loadFB(){
-  const{ref,onValue,query,orderByChild,limitToLast,db}=window._fb;
-  const q=query(ref(db,'sopro/daily'),orderByChild('date'),limitToLast(1000));
-  /* Timeout: se dados não chegarem em 5s, mostra tela vazia */
-  const t=setTimeout(()=>{
+  var db=window._fb.db;
+  var t=setTimeout(function(){
     setDot('demo','● Sem dados');
     toast('Firebase vazio — faça upload na aba Upload','w');
     boot();
-  },5000);
-  onValue(q,snap=>{
+  },6000);
+  db.ref('sopro/daily').orderByChild('date').limitToLast(1000).on('value',function(snap){
     clearTimeout(t);
-    const r=[];snap.forEach(c=>r.push(c.val()));
+    var r=[];
+    snap.forEach(function(c){r.push(c.val());});
     if(!r.length){
       setDot('demo','● Sem dados');
       toast('Firebase vazio — faça upload na aba Upload','w');
       boot();return;
     }
-    r.sort((a,b)=>a.date.localeCompare(b.date));
-    ALL=r.map(d=>({...d,itp:d.itp??itp(d),ic:d.ic??ic(d)}));
-    FIL=[...ALL];
+    r.sort(function(a,b){return a.date.localeCompare(b.date);});
+    ALL=r.map(function(d){return Object.assign({},d,{itp:d.itp!=null?d.itp:itp(d),ic:d.ic!=null?d.ic:ic(d)});});
+    FIL=ALL.slice();
     setDot('ok','● '+ALL.length+' registros');
     renderAll();updateCards();renderTable();
     toast('✓ '+ALL.length+' registros carregados','ok');
-  },err=>{
+  },function(err){
     clearTimeout(t);
     toast('Erro Firebase: '+err.message,'w');
     boot();
@@ -1446,8 +1444,7 @@ function deleteRow(date){
   const key=date.replace(/-/g,'');
   if(window._fb){
     const fb=window._fb;
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
-      .then(function(m){return m.remove(fb.ref(fb.db,'sopro/daily/'+key));})
+    window._fb.db.ref('sopro/daily/'+key).remove()
       .then(function(){toast('Registro '+date+' apagado','ok');})
       .catch(function(e){toast('Erro: '+e.message,'e');});
   }else{
@@ -1584,15 +1581,15 @@ function doFile(file){
       tentativas++;
     }
     if(window._fb){
-      try{
-        const{ref,set,db}=window._fb;
-        await set(ref(db,'sopro/daily'),batch);
-        toast('✓ '+ok+' registros salvos no Firebase!','ok');
-        if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
-      }catch(e){
-        toast('Erro Firebase: '+e.message,'e');
-        salvaLocal(batch,ok,sk);
-      }
+      window._fb.db.ref('sopro/daily').set(batch)
+        .then(function(){
+          toast('✓ '+ok+' registros salvos no Firebase!','ok');
+          if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
+        })
+        .catch(function(e){
+          toast('Erro Firebase: '+e.message,'e');
+          salvaLocal(batch,ok,sk);
+        });
     }else{
       salvaLocal(batch,ok,sk);
     }
