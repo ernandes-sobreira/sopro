@@ -505,17 +505,22 @@ footer{background:#1c1e22;border-top:1px solid #2d3748;padding:.9rem 1rem;
 <!-- FIREBASE MODAL -->
 <div class="ov" id="ov">
   <div class="mbox">
-    <div class="m-t">🔥 Conectar ao Firebase</div>
-    <div class="m-s">Use as credenciais do seu projeto Firebase. Dados ficam em <code>sopro/daily</code>.</div>
-    <div class="fl">API Key</div><input class="fin" id="f-api" placeholder="AIzaSy…">
-    <div class="fl">Database URL</div><input class="fin" id="f-db" placeholder="https://…-default-rtdb.firebaseio.com">
-    <div class="fl">Project ID</div><input class="fin" id="f-pid" placeholder="meu-projeto">
-    <div class="fl">App ID</div><input class="fin" id="f-aid" placeholder="1:000…:web:…">
-    <div class="m-note">💡 <strong>console.firebase.google.com</strong> → seu projeto → ⚙ Configurações → Seus aplicativos → copie o <code>firebaseConfig</code>.</div>
-    <div class="m-acts">
-      <button class="m-pr" onclick="connectFB()">🔗 Conectar</button>
-      <button class="m-sc" onclick="closeOv()">Cancelar</button>
+    <div class="m-t">&#128293; Firebase &#8212; Som Ambiental / UNEMAT</div>
+    <div class="m-s">Esta plataforma usa o Firebase <strong>som-ambiental</strong> (UNEMAT). Os dados ficam em <code>sopro/daily</code> e aparecem em qualquer dispositivo ou navegador.</div>
+    <div class="m-note" style="margin-top:.5rem">
+      <strong>&#128228; Como carregar seus dados:</strong><br>
+      Va para a aba <strong>Upload</strong> e faca upload do seu CSV diario.<br>
+      Os dados sao salvos no Firebase automaticamente.<br><br>
+      <strong>Formato do CSV:</strong><br>
+      <code>date, pm25, co2, temp, humidity, temp_max, temp_min, season</code>
     </div>
+    <div class="m-acts">
+      <button class="m-pr" onclick="connectFB()">&#128260; Reconectar</button>
+      <button class="m-sc" onclick="closeOv()">Fechar</button>
+    </div>
+    <div id="m-st"></div>
+  </div>
+</div>
     <div id="m-st"></div>
   </div>
 </div>
@@ -567,11 +572,17 @@ function genDemo(){
 }
 
 /* ═══ FIREBASE ═══ */
-function openFBModal(){
-  const s=JSON.parse(localStorage.getItem('sopro_fb')||'{}');
-  ['api','db','pid','aid'].forEach(k=>{if(s[k])document.getElementById('f-'+k).value=s[k];});
-  document.getElementById('ov').classList.add('on');
-}
+/* ── FIREBASE SOM-AMBIENTAL (fixo) ── */
+const FB_CFG={
+  apiKey:'AIzaSyBzL_Pic_2JETKOqs4tD9EC2TRynEFaZG4',
+  authDomain:'som-ambiental.firebaseapp.com',
+  databaseURL:'https://som-ambiental-default-rtdb.firebaseio.com',
+  projectId:'som-ambiental',
+  storageBucket:'som-ambiental.firebasestorage.app',
+  messagingSenderId:'1008024969251',
+  appId:'1:1008024969251:web:c40b04fbe48dd578a05196'
+};
+function openFBModal(){document.getElementById('ov').classList.add('on');}
 function closeOv(){document.getElementById('ov').classList.remove('on');}
 function setDot(c,t){document.getElementById('fb-dot').className='dot '+c;document.getElementById('fb-lbl').textContent=t;}
 
@@ -595,10 +606,10 @@ async function connectFB(){
 }
 function loadFB(){
   const{ref,onValue,query,orderByChild,limitToLast,db}=window._fb;
-  const q=query(ref(db,'sopro/daily'),orderByChild('date'),limitToLast(730));
+  const q=query(ref(db,'sopro/daily'),orderByChild('date'),limitToLast(1000));
   onValue(q,snap=>{
     const r=[];snap.forEach(c=>r.push(c.val()));
-    if(!r.length){toast('Nenhum dado em sopro/daily','w');boot();return;}
+    if(!r.length){toast('Nenhum dado no Firebase — usando armazenamento local','w');boot();return;}
     r.sort((a,b)=>a.date.localeCompare(b.date));
     ALL=r.map(d=>({...d,itp:d.itp??itp(d),ic:d.ic??ic(d)}));
     FIL=[...ALL];renderAll();updateCards();
@@ -606,9 +617,10 @@ function loadFB(){
   },err=>{toast('Erro FB: '+err.message,'e');boot();});
 }
 function boot(){
-  ALL=genDemo();FIL=[...ALL];setDot('demo','● Demo');
+  ALL=genDemo();
+  FIL=[...ALL];
+  setDot('demo','● Modo Demo — faça upload dos seus dados');
   updateCards();
-  /* Render after a tick so DOM has real dimensions */
   setTimeout(()=>renderAll(),80);
 }
 
@@ -1430,6 +1442,24 @@ function dlCSVall(){
   document.body.appendChild(a);a.click();
   setTimeout(()=>document.body.removeChild(a),300);
   toast('CSV completo: '+D.length+' registros','ok');
+}
+function clearData(){
+  if(!confirm('Limpar TODOS os dados do Firebase? Esta ação não pode ser desfeita.'))return;
+  if(window._fb){
+    window._fb.set(window._fb.ref(window._fb.db,'sopro/daily'),null)
+      .then(()=>{
+        ALL=genDemo();FIL=[...ALL];
+        setDot('demo','● Modo Demo');
+        renderAll();updateCards();renderTable();
+        toast('Dados apagados do Firebase. Modo demo ativado.','w');
+      })
+      .catch(e=>toast('Erro ao apagar: '+e.message,'e'));
+  }else{
+    ALL=genDemo();FIL=[...ALL];
+    setDot('demo','● Modo Demo');
+    renderAll();updateCards();renderTable();
+    toast('Modo demo ativado.','w');
+  }
 }
 function dlTpl(){
   const s=['date,pm25,co2,temp,humidity,temp_max,temp_min,season',
