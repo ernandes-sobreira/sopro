@@ -179,7 +179,7 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
     <div class="cc"><div class="cc-h"><div class="cc-t">Umidade (%)</div><div class="acts"><button class="act g" onclick="dlCSVk('humidity','Umidade')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-hum','Umidade')">⬇ PNG</button></div></div><div class="cw" id="cw-hum" style="height:180px"></div></div>
   </div>
   <div class="sh"><h3>Sazonalidade — Boxplots Reais</h3><hr></div>
-  <div class="desc">Linha grossa = mediana · Caixa = IQR (Q1–Q3) · Bigodes = 1,5×IQR · Círculo = média.</div>
+  <div class="desc">Linha grossa = mediana · Caixa = IQR (Q1–Q3) · Bigodes = 1,5×IQR · Círculo = média. <strong>Cores por estação:</strong> azul = Chuvosa (Jan–Mar) · verde = Trans. Chuva→Seca (Abr–Mai) · laranja = Seca (Jun–Set) · roxo = Trans. Seca→Chuva (Out–Dez). <span style="color:#e8a020">- - PI1=15µg/m³</span> · <span style="color:#c0392b">- - PI2=25µg/m³</span></div>
   <div class="g2">
     <div class="cc"><div class="cc-h"><div class="cc-t">PM₂.₅ por Mês — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-pm-bp','PM2.5_boxplot')">⬇ PNG</button></div></div><div class="cw" id="cw-pm-bp" style="height:260px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">Temperatura por Mês — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-te-bp','Temp_boxplot')">⬇ PNG</button></div></div><div class="cw" id="cw-te-bp" style="height:260px"></div></div>
@@ -458,9 +458,10 @@ function drawLineZ(D,key,col,wrapId,yLbl,refs){
 }
 
 function drawBoxplot(labels,stats,colors,wrapId,yLbl,yMinIn,yMaxIn,refs){
-  var w=W(wrapId),h=H(wrapId),legH=32,svgH=h+legH;
+  var w=W(wrapId),h=H(wrapId),svgH=0;/* svgH set after legH */
   var pad={l:52,r:refs&&refs.length?40:16,t:14,b:52};
   var cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
+  var legH=32; /* will be updated after leg is built */
   var valid=stats.filter(Boolean);if(!valid.length)return;
   var lo=yMinIn!=null?yMinIn:Math.min.apply(null,valid.map(function(s){return s.min;}))*.95;
   var hi=yMaxIn!=null?yMaxIn:Math.max.apply(null,valid.map(function(s){return s.max;}))*1.05;
@@ -484,7 +485,34 @@ function drawBoxplot(labels,stats,colors,wrapId,yLbl,yMinIn,yMaxIn,refs){
     var lbl=(labels[i]||'').replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
     var bpLblY=pad.t+cH+8;
     boxes+='<text transform="translate('+cx.toFixed(1)+','+bpLblY.toFixed(1)+') rotate(-30)" text-anchor="end" font-size="10" fill="#374151">'+lbl+'</text>';});
-  var leg='<g transform="translate('+pad.l+','+(h+6).toFixed(1)+')"><line x1="0" y1="5" x2="18" y2="5" stroke="#555" stroke-width="3.5"/><text x="22" y="9" font-size="9.5" fill="#555">Mediana</text><circle cx="68" cy="5" r="3.5" fill="white" stroke="#555" stroke-width="1.5"/><text x="74" y="9" font-size="9.5" fill="#555">Média</text><rect x="112" y="1" width="12" height="8" fill="rgba(100,100,100,.2)" stroke="#555" stroke-width="1.5" rx="1.5"/><text x="127" y="9" font-size="9.5" fill="#555">IQR</text></g>';
+  /* Build color legend for season-colored or month-colored boxplots */
+  var legItems=[['Mediana','line'],['Média','circle'],['IQR','rect']];
+  var legSVG='<g transform="translate('+pad.l+','+(h+6).toFixed(1)+')">';
+  legSVG+='<line x1="0" y1="5" x2="18" y2="5" stroke="#555" stroke-width="3.5"/><text x="22" y="9" font-size="9.5" fill="#555">Mediana</text>';
+  legSVG+='<circle cx="68" cy="5" r="3.5" fill="white" stroke="#555" stroke-width="1.5"/><text x="74" y="9" font-size="9.5" fill="#555">Média</text>';
+  legSVG+='<rect x="112" y="1" width="12" height="8" fill="rgba(100,100,100,.2)" stroke="#555" stroke-width="1.5" rx="1.5"/><text x="127" y="9" font-size="9.5" fill="#555">IQR</text>';
+  legSVG+='</g>';
+  /* Season color legend if colors is array */
+  var seasLegSVG='';
+  if(Array.isArray(colors)){
+    var seasDefs=[['Jan-Mar','#1d5fa8'],['Abr-Mai','#27ae60'],['Jun-Set','#e67e22'],['Out-Dez','#8e44ad']];
+    /* deduplicate colors used */
+    var seenC={};var seasItems=[];
+    colors.forEach(function(c,i){if(!seenC[c]){seenC[c]=true;}});
+    seasDefs.forEach(function(sd){if(seenC[sd[1]])seasItems.push(sd);});
+    if(seasItems.length>1){
+      seasLegSVG='<g transform="translate('+pad.l+','+(h+20).toFixed(1)+')">';
+      seasItems.forEach(function(sd,i){
+        var lx=i*(cW/seasItems.length);
+        seasLegSVG+='<rect x="'+lx+'" y="0" width="11" height="11" fill="'+sd[1]+'" opacity=".7" rx="2"/>';
+        seasLegSVG+='<text x="'+(lx+14)+'" y="9" font-size="9.5" fill="#374151">'+sd[0]+'</text>';
+      });
+      seasLegSVG+='</g>';
+    }
+  }
+  var leg=legSVG+seasLegSVG;
+  var legH=seasLegSVG?48:32;
+  svgH=h+legH;
   putSVG(wrapId,bands+svgG(pad,cW,cH,lo,hi)+svgRL(pad,cW,cH,lo,hi,refs)+boxes+svgAx(pad,cW,cH)+svgYT(pad,cH,yLbl||'')+leg,w,svgH);
 }
 
