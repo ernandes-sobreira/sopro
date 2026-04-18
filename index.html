@@ -199,10 +199,49 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
     <div class="cc"><div class="cc-h"><div class="cc-t">ITP Mensal — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-itp-mbp','ITP_mensal')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-mbp" style="height:240px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">ITP Heatmap Ano × Mês</div><div class="acts"><button class="act" onclick="dlPNG('cw-itp-hm','ITP_heatmap')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-hm" style="height:240px"></div></div>
   </div>
-  <div class="sh"><h3>Quadrantes T × PM₂.₅</h3><hr></div>
-  <div class="g2">
-    <div class="cc"><div class="cc-h"><div class="cc-t">Dispersão por Estação</div><div class="acts"><button class="act" onclick="dlPNG('cw-quad','Quadrantes')">⬇ PNG</button></div></div><div class="cw" id="cw-quad" style="height:240px"></div></div>
+  <div class="sh"><h3>Dispersão Interativa</h3><hr></div>
+  <div class="desc">Selecione as variáveis dos eixos e filtre por estação. As linhas pontilhadas marcam os limiares de cada quadrante.</div>
+  <div class="cc">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:.7rem;align-items:center">
+      <div style="display:flex;align-items:center;gap:5px">
+        <label style="font-size:11px;font-weight:700;color:#1d5fa8">Eixo X:</label>
+        <select id="sc-x" onchange="renderScatterCustom()" style="border:1.5px solid #1d5fa8;border-radius:5px;padding:4px 7px;font-size:11px;background:#f0f7ff;color:#1a1d23;font-family:inherit">
+          <option value="temp">Temperatura (°C)</option>
+          <option value="pm25">PM₂.₅ (µg/m³)</option>
+          <option value="co2">CO₂ (ppm)</option>
+          <option value="humidity">Umidade (%)</option>
+          <option value="itp">ITP</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <label style="font-size:11px;font-weight:700;color:#1d5fa8">Eixo Y:</label>
+        <select id="sc-y" onchange="renderScatterCustom()" style="border:1.5px solid #1d5fa8;border-radius:5px;padding:4px 7px;font-size:11px;background:#f0f7ff;color:#1a1d23;font-family:inherit">
+          <option value="pm25">PM₂.₅ (µg/m³)</option>
+          <option value="temp">Temperatura (°C)</option>
+          <option value="co2">CO₂ (ppm)</option>
+          <option value="humidity">Umidade (%)</option>
+          <option value="itp">ITP</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.7rem">
+      <span style="font-size:11px;font-weight:700;color:#1d5fa8;align-self:center">Estações:</span>
+      <button id="sc-s-Chuvosa" onclick="toggleSeason('Chuvosa')" style="background:#1d5fa8;color:#fff;border:2px solid #1d5fa8;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Chuvosa</button>
+      <button id="sc-s-Trans.Chuva->Seca" onclick="toggleSeason('Trans.Chuva->Seca')" style="background:#27ae60;color:#fff;border:2px solid #27ae60;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Trans. C→S</button>
+      <button id="sc-s-Seca" onclick="toggleSeason('Seca')" style="background:#e67e22;color:#fff;border:2px solid #e67e22;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Seca</button>
+      <button id="sc-s-Trans.Seca->Chuva" onclick="toggleSeason('Trans.Seca->Chuva')" style="background:#8e44ad;color:#fff;border:2px solid #8e44ad;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Trans. S→C</button>
+      <button onclick="resetSeasons()" style="background:#f0f7ff;color:#1d5fa8;border:1.5px solid #1d5fa8;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">Todas</button>
+    </div>
+    <div id="sc-info" style="font-size:11px;color:#6c7280;margin-bottom:.4rem"></div>
+    <div class="cc-h" style="border:none;padding:0;margin-bottom:.3rem">
+      <div><div class="cc-t" id="sc-title">Dispersão: Temperatura × PM₂.₅</div></div>
+      <div class="acts"><button class="act" onclick="dlPNG('cw-quad','Dispersao')">⬇ PNG</button></div>
+    </div>
+    <div class="cw" id="cw-quad" style="height:280px"></div>
+  </div>
+  <div class="g2" style="margin-top:10px">
     <div class="cc"><div class="cc-h"><div class="cc-t">Regime por Estação (%)</div><div class="acts"><button class="act" onclick="dlPNG('cw-qbar','Regime')">⬇ PNG</button></div></div><div class="cw" id="cw-qbar" style="height:240px"></div></div>
+    <div class="cc" id="sc-stats-box"><div class="cc-h"><div class="cc-t">Estatísticas por Estação</div></div><div id="sc-stats" style="padding:.5rem;font-size:11px;font-family:monospace;line-height:1.8"></div></div>
   </div>
 </div>
 
@@ -632,10 +671,72 @@ function renderAnalise(){
   var years=[];Da.forEach(function(d){var y=d.date.slice(0,4);if(years.indexOf(y)<0)years.push(y);});years.sort();
   var hZ=years.map(function(y){return MOS.map(function(_,m){var a=Da.filter(function(d){return d.date.slice(0,4)===y&&new Date(d.date).getMonth()===m;}).map(function(d){return d.itp;});return a.length?+(a.reduce(function(s,v){return s+v;},0)/a.length).toFixed(2):null;});});
   if(hZ.length)drawHeatmap(hZ,MOS,years,'cw-itp-hm','RdBu',-2,3);
-  drawScatter(SEAS.map(function(s){return{label:s,color:SC[s]||'#888',pts:D.filter(function(d){return d.season===s&&d.temp&&d.pm25;}).map(function(d){return{x:d.temp,y:d.pm25};}).slice(0,100)};}), 'Temperatura (°C)','PM₂.₅ (µg/m³)','cw-quad',[{type:'vline',v:33},{type:'hline',v:12}]);
+  window._scSeasons={Chuvosa:true,'Trans.Chuva->Seca':true,Seca:true,'Trans.Seca->Chuva':true};
+  renderScatterCustom();
   var TM=33,PMT=12;
   var qD=SEAS.map(function(s){var a=D.filter(function(d){return d.season===s&&d.temp&&d.pm25;}),t=a.length||1;return[+(a.filter(function(d){return d.temp>=TM&&d.pm25>=PMT;}).length/t*100).toFixed(1),+(a.filter(function(d){return d.temp>=TM&&d.pm25<PMT;}).length/t*100).toFixed(1),+(a.filter(function(d){return d.temp<TM&&d.pm25>=PMT;}).length/t*100).toFixed(1),+(a.filter(function(d){return d.temp<TM&&d.pm25<PMT;}).length/t*100).toFixed(1)];});
   drawStacked(SEAS,qD,['Q1 Quente+Poluído','Q2 Quente+Limpo','Q3 Frio+Poluído','Q4 Frio+Limpo'],['#c0392b','#e67e22','#8e44ad','#1d5fa8'],'cw-qbar');
+}
+var VAR_LABELS={temp:'Temperatura (°C)',pm25:'PM₂.₅ (µg/m³)',co2:'CO₂ (ppm)',humidity:'Umidade (%)',itp:'ITP'};
+function toggleSeason(s){
+  if(!window._scSeasons)window._scSeasons={Chuvosa:true,'Trans.Chuva->Seca':true,Seca:true,'Trans.Seca->Chuva':true};
+  window._scSeasons[s]=!window._scSeasons[s];
+  var btn=document.getElementById('sc-s-'+s);
+  if(btn){
+    var on=window._scSeasons[s];
+    btn.style.opacity=on?'1':'0.35';
+    btn.style.background=on?SC[s]:'#fff';
+    btn.style.color=on?'#fff':SC[s];
+  }
+  renderScatterCustom();
+}
+function resetSeasons(){
+  window._scSeasons={Chuvosa:true,'Trans.Chuva->Seca':true,Seca:true,'Trans.Seca->Chuva':true};
+  SEAS.forEach(function(s){
+    var btn=document.getElementById('sc-s-'+s);
+    if(btn){btn.style.opacity='1';btn.style.background=SC[s];btn.style.color='#fff';}
+  });
+  renderScatterCustom();
+}
+function renderScatterCustom(){
+  var D=FIL;if(!D.length)return;
+  var xKey=document.getElementById('sc-x')&&document.getElementById('sc-x').value||'temp';
+  var yKey=document.getElementById('sc-y')&&document.getElementById('sc-y').value||'pm25';
+  var xLbl=VAR_LABELS[xKey]||xKey;
+  var yLbl=VAR_LABELS[yKey]||yKey;
+  if(!window._scSeasons)window._scSeasons={Chuvosa:true,'Trans.Chuva->Seca':true,Seca:true,'Trans.Seca->Chuva':true};
+  var activeSeas=SEAS.filter(function(s){return window._scSeasons[s];});
+  var title=document.getElementById('sc-title');
+  if(title)title.textContent='Dispersão: '+xLbl.split(' ')[0]+' × '+yLbl.split(' ')[0];
+  var datasets=activeSeas.map(function(s){
+    return{label:s,color:SC[s]||'#888',
+      pts:D.filter(function(d){return d.season===s&&d[xKey]!=null&&d[yKey]!=null;})
+          .map(function(d){return{x:parseFloat(d[xKey]),y:parseFloat(d[yKey])};})
+          .slice(0,150)};
+  });
+  /* Compute median thresholds for crosshairs */
+  var allX=D.filter(function(d){return d[xKey]!=null;}).map(function(d){return parseFloat(d[xKey]);}).sort(function(a,b){return a-b;});
+  var allY=D.filter(function(d){return d[yKey]!=null;}).map(function(d){return parseFloat(d[yKey]);}).sort(function(a,b){return a-b;});
+  var medX=allX[~~(allX.length/2)]||0;
+  var medY=allY[~~(allY.length/2)]||0;
+  drawScatter(datasets,xLbl,yLbl,'cw-quad',[{type:'vline',v:medX},{type:'hline',v:medY}]);
+  /* Stats box */
+  var info=document.getElementById('sc-info');
+  var totalPts=datasets.reduce(function(s,ds){return s+ds.pts.length;},0);
+  if(info)info.textContent=totalPts+' pontos · Mediana X='+medX.toFixed(1)+' · Mediana Y='+medY.toFixed(1);
+  var stats=document.getElementById('sc-stats');
+  if(stats){
+    var rows=activeSeas.map(function(s){
+      var pts=D.filter(function(d){return d.season===s&&d[xKey]!=null&&d[yKey]!=null;});
+      if(!pts.length)return'';
+      var avgX=(pts.reduce(function(a,d){return a+parseFloat(d[xKey]);},0)/pts.length).toFixed(1);
+      var avgY=(pts.reduce(function(a,d){return a+parseFloat(d[yKey]);},0)/pts.length).toFixed(1);
+      var col=SC[s]||'#888';
+      var slbl=s.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
+      return'<div style="margin-bottom:5px"><span style="display:inline-block;width:10px;height:10px;background:'+col+';border-radius:2px;margin-right:5px"></span><strong>'+slbl+'</strong> (n='+pts.length+')<br>  '+xLbl.split(' ')[0]+'='+avgX+' · '+yLbl.split(' ')[0]+'='+avgY+'</div>';
+    });
+    stats.innerHTML=rows.join('');
+  }
 }
 function renderOndas(){
   var D=FIL;if(!D.length)return;
