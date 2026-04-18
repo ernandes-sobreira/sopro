@@ -551,7 +551,7 @@ function drawScatter(datasets,xLbl,yLbl,wrapId,extras){
   var toX=function(v){return pad.l+cW*(v-xlo)/(xhi-xlo||1);};
   var toY=function(v){return pad.t+cH*(1-(v-ylo)/(yhi-ylo||1));};
   var pts='';datasets.forEach(function(ds){ds.pts.slice(0,120).forEach(function(p){pts+='<circle cx="'+toX(p.x).toFixed(1)+'" cy="'+toY(p.y).toFixed(1)+'" r="3.8" fill="'+ds.color+'" opacity=".6"/>';});});
-  var ext='';(extras||[]).forEach(function(e){if(e.type==='vline'){var x=toX(e.v);ext+='<line x1="'+x.toFixed(1)+'" y1="'+pad.t+'" x2="'+x.toFixed(1)+'" y2="'+(pad.t+cH)+'" stroke="'+(e.c||'#95a5a6')+'" stroke-width="1.2" stroke-dasharray="4,3"/>';}if(e.type==='hline'){var y=toY(e.v);ext+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+(e.c||'#95a5a6')+'" stroke-width="1.2" stroke-dasharray="4,3"/>\';}});
+  var ext='';(extras||[]).forEach(function(e){if(e.type==='vline'){var x=toX(e.v);ext+='<line x1="'+x.toFixed(1)+'" y1="'+pad.t+'" x2="'+x.toFixed(1)+'" y2="'+(pad.t+cH)+'" stroke="'+(e.c||'#95a5a6')+'" stroke-width="1.2" stroke-dasharray="4,3"/>';}if(e.type==='hline'){var y=toY(e.v);ext+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+(e.c||'#95a5a6')+'" stroke-width="1.2" stroke-dasharray="4,3"/>";}}});
   var gd=svgGrid(pad,cW,cH,ylo,yhi);
   var xt='';for(var i=0;i<=4;i++){var v=xlo+(xhi-xlo)*i/4,x=toX(v);xt+='<text x="'+x.toFixed(1)+'" y="'+(pad.t+cH+13).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="#6c7280">'+v.toFixed(0)+'</text>';}
   var leg='';datasets.forEach(function(ds,i){var cols=3,col=i%cols,row=Math.floor(i/cols),lx=pad.l+col*(cW/cols),ly=h+4+row*14;leg+='<circle cx="'+(lx+5)+'" cy="'+(ly+5)+'" r="4" fill="'+ds.color+'" opacity=".8"/><text x="'+(lx+13)+'" y="'+(ly+9)+'" font-size="9.5" fill="#374151">'+ds.label+'</text>';});
@@ -733,8 +733,10 @@ function dlModelo(){var csv='date,pm25,co2,temp,humidity,temp_max,temp_min,seaso
 /* ═══ LOAD DATA ═══ */
 function loadData(){
   setFBStatus(false,'⏳ Carregando…');
-  fetch(DB+'/sopro/daily.json')
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  var ctrl=new AbortController();
+  var timer=setTimeout(function(){ctrl.abort();},8000);
+  fetch(DB+'/sopro/daily.json',{signal:ctrl.signal})
+    .then(function(r){clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(data){
       setFBStatus(true,'● '+((data&&Object.keys(data).length)||0)+' registros');
       if(!data){setAlrt('✅ Firebase conectado. Vá em Upload e envie seu CSV.','ok');ALL=[];FIL=[];return;}
@@ -744,7 +746,12 @@ function loadData(){
       updateCards();renderPainel();renderTable();
       setAlrt('✅ '+ALL.length+' registros carregados · '+ALL[0].date+' → '+ALL[ALL.length-1].date,'ok');
     })
-    .catch(function(e){setFBStatus(false,'❌ Erro');setAlrt('❌ Erro Firebase: '+e.message,'r');toast('Erro: '+e.message,'e');});
+    .catch(function(e){
+    var msg=e.name==='AbortError'?'Timeout — Firebase demorou demais. Tente recarregar.':e.message;
+    setFBStatus(false,'❌ Sem conexão');
+    setAlrt('❌ '+msg+' — Tente recarregar a página.','r');
+    toast(msg,'e');
+  });
 }
 
 /* ═══ INIT ═══ */
