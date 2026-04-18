@@ -5,1605 +5,272 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SOPRO · Qualidade do Ar · Cáceres-MT</title>
 <style>
-/* Self-contained fonts - no external dependency */
-</style>
-<script>
-/* Mini CSV parser */
-const Papa={
-  parse:function(csv,opts){
-    var NL=String.fromCharCode(10);
-    var CR=String.fromCharCode(13);
-    var text=csv.replace(new RegExp(CR+NL,'g'),NL).replace(new RegExp(CR,'g'),NL).trim();
-    var lines=text.split(NL);
-    var headers=lines[0].split(',').map(function(h){return h.trim().replace(/^["']|["']$/g,'');});
-    var data=lines.slice(1).filter(function(l){return l.trim();}).map(function(line){
-      var vals=line.split(',');
-      var row={};
-      headers.forEach(function(h,i){row[h]=(vals[i]||'').trim().replace(/^["']|["']$/g,'');});
-      return row;
-    });
-    if(opts&&opts.complete)opts.complete({data:data,errors:[]});
-    return{data:data};
-  }
-};
-</script>
-<style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --ink:#1c1e22;--muted:#6c7280;--subtle:#9ca3af;--border:#e1e4e8;
-  --surface:#ffffff;--bg:#f4f5f7;--accent:#1d5fa8;--accent2:#c0392b;
-  --s1:#1d5fa8;--s2:#27ae60;--s3:#e67e22;--s4:#8e44ad;
-  --warn:#f39c12;--danger:#c0392b;
-  --r:8px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.06);
-}
-html{font-size:14px}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-
-/* ── topbar ── */
-.top{background:var(--ink);height:52px;display:flex;align-items:center;
-  padding:0 1rem;gap:.5rem;position:sticky;top:0;z-index:500;
-  overflow-x:auto;scrollbar-width:none;border-bottom:2px solid #1d5fa8}
-.top::-webkit-scrollbar{display:none}
-.logo{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-right:.4rem}
-.logo-mark{width:28px;height:28px;border-radius:5px;
-  background:linear-gradient(135deg,#1d5fa8,#1a5276);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
-.logo-name{color:#f0f4f8;font-weight:700;font-size:13px;white-space:nowrap;letter-spacing:.3px}
-.logo-sub{font-size:9px;color:#8b9ab3;white-space:nowrap}
-.nb{background:transparent;border:none;color:#8b9ab3;padding:4px 10px;
-  border-radius:4px;cursor:pointer;font-size:11.5px;font-family:inherit;
-  font-weight:500;white-space:nowrap;transition:.1s}
-.nb:hover{background:#2d3748;color:#f0f4f8}
-.nb.on{background:#1d5fa8;color:#fff;font-weight:600}
-.fb-btn{display:flex;align-items:center;gap:4px;padding:3px 8px;
-  border-radius:20px;background:#2d3748;border:1px solid #3d4a5c;
-  color:#8b9ab3;font-size:9px;font-family:'IBM Plex Mono';
-  cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:auto;transition:.15s}
-.fb-btn:hover{border-color:#1d5fa8;color:#60a5fa}
-.dot{width:6px;height:6px;border-radius:50%;background:#5a6478;flex-shrink:0}
-.dot.ok{background:#27ae60;box-shadow:0 0 4px #27ae60}
-.dot.demo{background:#f39c12}
-.dot.err{background:#c0392b}
-
-/* ── alert ── */
-.alrt{padding:.4rem 1rem;font-size:12px;font-weight:500;
-  display:flex;align-items:center;gap:7px}
-.alrt.g{background:#f0fff4;border-bottom:2px solid #27ae60;color:#166534}
-.alrt.y{background:#fffbeb;border-bottom:2px solid #f39c12;color:#92400e}
-.alrt.r{background:#fff1f2;border-bottom:2px solid #c0392b;color:#9f1239}
-
-/* ── hero ── */
-.hero{background:linear-gradient(150deg,#1a2332 0%,#1d3557 55%,#162030 100%);
-  padding:1.4rem 1rem 1.2rem;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,#1d5fa8,transparent)}
-.hbadge{display:inline-flex;align-items:center;gap:5px;
-  background:rgba(29,95,168,.15);border:1px solid rgba(29,95,168,.35);
-  color:#90b8e0;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
-  padding:2px 8px;border-radius:20px;margin-bottom:10px;font-family:'IBM Plex Mono'}
-.hero h1{font-size:1.7rem;font-weight:700;color:#e8eef5;letter-spacing:-1px;line-height:1.1}
-.hero h1 b{color:#5fa8e8}
-.hero-desc{color:#8b9ab3;font-size:11.5px;line-height:1.65;max-width:480px;margin-top:6px}
-.hstats{display:flex;gap:1.2rem;margin-top:1rem;flex-wrap:wrap}
-.hv{color:#5fa8e8;font-weight:700;font-size:1.5rem;font-family:'IBM Plex Mono';line-height:1}
-.hl{font-size:9px;color:#6c7280;letter-spacing:.5px;margin-top:1px}
-
-/* ── cards ── */
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-  max-width:1440px;margin:.9rem auto;padding:0 .9rem}
-@media(min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
-.sc{background:#fff;border:1px solid var(--border);border-radius:var(--r);
-  padding:.8rem .9rem;position:relative;overflow:hidden;
-  box-shadow:var(--shadow)}
-.sc-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
-.sc-l{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:600;margin-top:1px}
-.sc-v{font-family:'IBM Plex Mono';font-size:1.55rem;font-weight:700;margin:4px 0 1px;line-height:1.1}
-.sc-u{font-size:9px;color:var(--subtle)}
-
-/* ── pages ── */
-.pg{max-width:1440px;margin:0 auto;padding:0 .9rem 2rem;display:none}
-
-/* ── filter bar ── */
-.fbar{background:#fff;border:2px solid var(--accent);border-radius:var(--r);
-  padding:.7rem 1rem;display:flex;align-items:center;gap:.6rem;
-  flex-wrap:wrap;margin:.9rem 0;box-shadow:0 0 0 3px rgba(29,95,168,.07)}
-.fbar-l{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;
-  letter-spacing:.7px;white-space:nowrap}
-.fbar input[type=date]{border:1.5px solid var(--accent);border-radius:5px;
-  padding:5px 8px;font-size:11px;font-family:'IBM Plex Mono';
-  color:var(--ink);background:#f0f7ff}
-.fbar input[type=date]:focus{outline:none;background:#fff}
-.qbs{display:flex;gap:3px;flex-wrap:wrap}
-.qb{background:#f0f7ff;border:1.5px solid var(--accent);color:var(--accent);
-  padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;transition:.1s}
-.qb:hover,.qb.on{background:var(--accent);color:#fff}
-.ab{background:var(--accent);border:none;color:#fff;padding:5px 12px;
-  border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;
-  font-family:inherit;white-space:nowrap}
-.ab:hover{background:#1a5296}
-.dl-all{background:#166534;border:none;color:#fff;padding:5px 11px;
-  border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;
-  display:flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap}
-.dl-all:hover{background:#14532d}
-
-/* ── section header ── */
-.sh{margin:1.3rem 0 .35rem;display:flex;align-items:center;gap:8px}
-.sh-t{font-size:.95rem;font-weight:700;color:var(--ink);white-space:nowrap}
-.sh-hr{flex:1;height:1px;background:var(--border)}
-.sd{font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:.9rem;
-  border-left:3px solid var(--accent);background:#f8faff;
-  padding:.55rem .9rem;border-radius:0 6px 6px 0}
-.sd strong{color:var(--ink);font-weight:600}
-
-/* ── chart card ── */
-.cc{background:#fff;border:1px solid var(--border);border-radius:var(--r);
-  padding:1rem .9rem .8rem;margin-bottom:12px;box-shadow:var(--shadow)}
-.cc-h{display:flex;align-items:flex-start;justify-content:space-between;
-  padding-bottom:.55rem;border-bottom:1px solid #f0f1f3;margin-bottom:.8rem;gap:.6rem}
-.cc-t{font-size:.84rem;font-weight:700;color:var(--ink);line-height:1.3}
-.cc-s{font-size:10px;color:var(--muted);margin-top:1px}
-.cc-acts{display:flex;gap:3px;flex-shrink:0;flex-wrap:wrap}
-.act{border:1.5px solid var(--accent);color:var(--accent);background:#f0f7ff;
-  padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;
-  font-weight:700;font-family:'IBM Plex Mono';white-space:nowrap;transition:.1s}
-.act:hover{background:var(--accent);color:#fff}
-.act.g{border-color:#166534;color:#166534;background:#f0fff4}
-.act.g:hover{background:#166534;color:#fff}
-
-/* ── SVG charts ── */
-.chart-wrap{position:relative;width:100%;overflow:hidden}
-.chart-wrap svg{display:block;width:100%;overflow:visible}
-.cw-info{font-size:9.5px;color:var(--subtle);font-style:italic;
-  text-align:right;margin-top:3px}
-
-/* ── grids ── */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-@media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
-
-/* ── Firebase modal ── */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;transition:.2s;padding:1rem}
-.ov.on{opacity:1;pointer-events:all}
-.mbox{background:#fff;border-radius:10px;padding:1.5rem;max-width:440px;width:100%;
-  box-shadow:0 20px 60px rgba(0,0,0,.25);transform:translateY(12px);transition:.2s}
-.ov.on .mbox{transform:none}
-.m-t{font-size:1.05rem;font-weight:700;margin-bottom:.3rem}
-.m-s{font-size:11.5px;color:var(--muted);margin-bottom:.8rem;line-height:1.6}
-.fl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:2px}
-.fin{width:100%;border:1.5px solid var(--border);border-radius:5px;
-  padding:6px 8px;font-size:11.5px;font-family:'IBM Plex Mono';margin-bottom:.55rem}
-.fin:focus{outline:none;border-color:var(--accent)}
-.m-note{background:#f0f7ff;border:1px solid #bfdbfe;border-radius:5px;
-  padding:.5rem .8rem;font-size:11px;color:#1e40af;line-height:1.6;margin-top:.6rem}
-.m-note code{background:#dbeafe;padding:1px 4px;border-radius:3px;font-family:'IBM Plex Mono'}
-.m-acts{display:flex;gap:6px;margin-top:.8rem}
-.m-pr{flex:1;background:var(--accent);border:none;color:#fff;padding:8px;
-  border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:'IBM Plex Sans'}
-.m-pr:hover{background:#1a5296}
-.m-sc{background:#f9fafb;border:1px solid var(--border);color:var(--muted);
-  padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12.5px;font-family:'IBM Plex Sans'}
-.m-sc:hover{background:var(--ink);color:#fff}
-#m-st{font-size:10px;color:var(--muted);margin-top:.45rem;font-family:'IBM Plex Mono';min-height:12px}
-
-/* ── upload ── */
-.upz{border:2px dashed var(--border);border-radius:var(--r);padding:1.8rem;
-  text-align:center;cursor:pointer;background:#fff;transition:.2s;position:relative}
-.upz:hover{border-color:var(--accent);background:#f0f7ff}
-.upz input{position:absolute;inset:0;opacity:0;cursor:pointer}
-
-/* ── table ── */
-.tw{overflow-x:auto;border-radius:7px;border:1px solid var(--border)}
-.tbl{width:100%;border-collapse:collapse;font-size:11px;font-family:'IBM Plex Mono'}
-.tbl th{background:#f6f8fa;padding:6px 10px;text-align:left;font-size:9px;
-  text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;
-  border-bottom:1px solid var(--border)}
-.tbl td{padding:5px 10px;border-bottom:1px solid #f3f4f6}
-.tbl tr:last-child td{border:none}
-.tbl tr:hover td{background:#f9fafb}
-.rsk{display:inline-flex;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase}
-.rok{background:#dcfce7;color:#166534}
-.rm{background:#fef9c3;color:#7d4e00}
-.rh{background:#fee2e2;color:#9f1239}
-.rx{background:#7c3aed;color:#fff}
-
-/* ── team ── */
-.tg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.tc{background:#fff;border:1px solid var(--border);border-radius:var(--r);
-  padding:1.1rem;box-shadow:var(--shadow)}
-.t-role{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;
-  color:var(--accent);font-weight:700;margin-bottom:3px}
-.t-name{font-size:.88rem;font-weight:700;margin-bottom:4px}
-.t-info{font-size:11px;color:var(--muted);line-height:1.7}
-
-/* ── toast ── */
-.tz{position:fixed;bottom:.9rem;right:.9rem;display:flex;flex-direction:column;
-  gap:5px;z-index:999}
-.toast{background:#1c1e22;color:#e8eef5;padding:8px 12px;border-radius:6px;
-  font-size:11px;font-family:'IBM Plex Mono';max-width:280px;
-  animation:tu .3s ease;box-shadow:0 4px 14px rgba(0,0,0,.2)}
-.toast.ok{border-left:3px solid #27ae60}
-.toast.w{border-left:3px solid #f39c12}
-.toast.e{border-left:3px solid #c0392b}
-@keyframes tu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-
-footer{background:#1c1e22;border-top:1px solid #2d3748;padding:.9rem 1rem;
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
-  gap:.3rem;margin-top:1.5rem}
-.ft{color:#4a5568;font-size:9.5px;font-family:'IBM Plex Mono'}
-.fbs{display:flex;gap:5px;flex-wrap:wrap}
-.fb{background:#2d3748;color:#4a5568;font-size:9px;padding:2px 7px;
-  border-radius:3px;font-family:'IBM Plex Mono'}
-
-/* ── SVG styles ── */
-.axis-line{stroke:#adb5bd;stroke-width:1.3}
-.grid-line{stroke:#e8eaed;stroke-width:1}
-.axis-label{font-family:'IBM Plex Sans',sans-serif;fill:#374151}
-.chart-title-text{font-family:'IBM Plex Sans',sans-serif;fill:#1c1e22;font-weight:600}
+body{font-family:system-ui,sans-serif;background:#f0f2f5;color:#1a1d23}
+.top{background:#12181f;padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:2px solid #1d5fa8}
+.top h1{color:#fff;font-size:1rem;font-weight:700}
+#fb-status{font-size:11px;padding:3px 10px;border-radius:20px;background:#2a3444;color:#8b9ab3;border:1px solid #3d4a5c}
+#fb-status.ok{background:#166534;color:#fff;border-color:#166534}
+#fb-status.err{background:#9f1239;color:#fff;border-color:#9f1239}
+.nav{background:#1a2332;display:flex;border-bottom:2px solid #263245;overflow-x:auto}
+.nav button{background:transparent;border:none;border-bottom:3px solid transparent;color:#8b9ab3;padding:12px 20px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;min-height:44px;font-family:inherit}
+.nav button.on{color:#fff;border-bottom-color:#1d5fa8}
+.alrt{padding:.5rem 1rem;font-size:12px;font-weight:600;background:#fffbeb;border-bottom:2px solid #f39c12;color:#854d0e}
+.alrt.ok{background:#f0fff4;border-color:#27ae60;color:#166534}
+.alrt.err{background:#fff1f2;border-color:#c0392b;color:#9f1239}
+.pg{display:none;max-width:900px;margin:0 auto;padding:1rem}
+.pg.on{display:block}
+h2{font-size:1.1rem;font-weight:700;margin:1rem 0 .5rem;padding-bottom:.4rem;border-bottom:2px solid #e1e4e8}
+.upz{border:2px dashed #1d5fa8;border-radius:8px;padding:2rem;text-align:center;cursor:pointer;background:#fff;position:relative;margin-bottom:1rem}
+.upz:hover{background:#f0f7ff}
+.upz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upz p{font-size:.9rem;font-weight:600;color:#1d5fa8;margin-top:.5rem}
+.upz small{color:#6c7280;font-size:11px}
+.btn{display:inline-block;background:#1d5fa8;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;margin:.3rem}
+.btn:hover{background:#1a5296}
+.btn.red{background:#9f1239}.btn.red:hover{background:#7f1032}
+.btn.green{background:#166534}.btn.green:hover{background:#14532d}
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+@media(min-width:600px){.card-grid{grid-template-columns:repeat(6,1fr)}}
+.card{background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:.8rem;text-align:center;border-top:3px solid #1d5fa8}
+.card-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#6c7280;font-weight:600}
+.card-value{font-size:1.4rem;font-weight:800;font-family:monospace;margin:.3rem 0}
+.card-unit{font-size:9px;color:#9ca3af}
+table{width:100%;border-collapse:collapse;font-size:11px;font-family:monospace;background:#fff;border-radius:7px;overflow:hidden;border:1px solid #e1e4e8}
+th{background:#f6f8fa;padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#6c7280;font-weight:700;border-bottom:1px solid #e1e4e8}
+td{padding:5px 10px;border-bottom:1px solid #f3f4f6}
+tr:last-child td{border:none}
+tr:hover td{background:#f9fafb}
+#log{background:#1c1e22;color:#22c55e;font-family:monospace;font-size:11px;padding:.8rem;border-radius:6px;margin-top:1rem;min-height:60px;white-space:pre-wrap}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
-<nav class="top">
-  <div class="logo">
-    <div class="logo-mark">S</div>
-    <div>
-      <div class="logo-name">SOPRO</div>
-      <div class="logo-sub">Qualidade do Ar · Cáceres-MT · UNEMAT</div>
-    </div>
-  </div>
-
-  <div class="fb-btn" id="fb-btn" onclick="openFBModal()">
-    <div class="dot" id="fb-dot"></div>
-    <span id="fb-lbl">Firebase</span>
-  </div>
-</nav>
-<div id="nav-bar" style="background:#1a2332;border-bottom:2px solid #263245;display:flex;overflow-x:auto;position:sticky;top:48px;z-index:499">
-  <button id="nb-painel"  onclick="goPage('painel')"  style="background:transparent;border:none;border-bottom:3px solid #1d5fa8;color:#fff;padding:12px 18px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:700;white-space:nowrap;min-height:44px">Painel</button>
-  <button id="nb-analise" onclick="goPage('analise')" style="background:transparent;border:none;border-bottom:3px solid transparent;color:#8b9ab3;padding:12px 18px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;white-space:nowrap;min-height:44px">Análise</button>
-  <button id="nb-ondas"   onclick="goPage('ondas')"   style="background:transparent;border:none;border-bottom:3px solid transparent;color:#8b9ab3;padding:12px 18px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;white-space:nowrap;min-height:44px">Ondas de Calor</button>
-  <button id="nb-upload"  onclick="goPage('upload')"  style="background:transparent;border:none;border-bottom:3px solid transparent;color:#8b9ab3;padding:12px 18px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;white-space:nowrap;min-width:70px;min-height:44px">Upload</button>
-  <button id="nb-sobre"   onclick="goPage('sobre')"   style="background:transparent;border:none;border-bottom:3px solid transparent;color:#8b9ab3;padding:12px 18px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;white-space:nowrap;min-height:44px">Sobre</button>
+<div class="top">
+  <h1>🌬 SOPRO · Qualidade do Ar · Cáceres-MT · UNEMAT</h1>
+  <span id="fb-status">⏳ Conectando…</span>
 </div>
 
-<!-- ALERT -->
-<div class="alrt y" id="alrt"><span id="alrt-t">Aguardando dados — faça upload na aba Upload.</span></div>
-
-<!-- HERO -->
-<div class="hero">
-  <div class="hbadge">🌬 Monitoramento Contínuo · Pantanal Norte · UNEMAT</div>
-  <h1>SOPRO · <b>Qualidade do Ar</b></h1>
-  <p class="hero-desc">PM₂.₅ · CO₂ · Temperatura · Umidade — Estação Meteorológica UNEMAT, Cáceres-MT. Análise sazonal, ondas de calor e alertas para comunidade e pesquisadores.</p>
-  <div class="hstats">
-    <div><div class="hv" id="h-n">—</div><div class="hl">Registros</div></div>
-    <div><div class="hv" id="h-max">—</div><div class="hl">PM₂.₅ máx</div></div>
-    <div><div class="hv" id="h-crit">—</div><div class="hl">Dias críticos</div></div>
-    <div><div class="hv" id="h-per">—</div><div class="hl">Período</div></div>
-  </div>
+<div class="nav">
+  <button class="on" onclick="go('painel',this)">Painel</button>
+  <button onclick="go('upload',this)">Upload</button>
+  <button onclick="go('sobre',this)">Sobre</button>
 </div>
 
-<!-- CARDS -->
-<div class="cards">
-  <div class="sc"><div class="sc-bar" style="background:#c0392b"></div><div class="sc-l">PM₂.₅</div><div class="sc-v" id="c-pm" style="color:#c0392b">—</div><div class="sc-u">µg/m³ · média</div></div>
-  <div class="sc"><div class="sc-bar" style="background:#27ae60"></div><div class="sc-l">CO₂</div><div class="sc-v" id="c-co" style="color:#27ae60">—</div><div class="sc-u">ppm</div></div>
-  <div class="sc"><div class="sc-bar" style="background:#e67e22"></div><div class="sc-l">Temperatura</div><div class="sc-v" id="c-te" style="color:#e67e22">—</div><div class="sc-u">°C · média</div></div>
-  <div class="sc"><div class="sc-bar" style="background:#1d5fa8"></div><div class="sc-l">Umidade</div><div class="sc-v" id="c-hu" style="color:#1d5fa8">—</div><div class="sc-u">%</div></div>
-  <div class="sc"><div class="sc-bar" style="background:#8e44ad"></div><div class="sc-l">ITP</div><div class="sc-v" id="c-it" style="color:#8e44ad">—</div><div class="sc-u">Termopoliuidor</div></div>
-  <div class="sc"><div class="sc-bar" style="background:#d29922"></div><div class="sc-l">Estação</div><div class="sc-v" id="c-se" style="font-size:.95rem;margin-top:7px;color:#d29922">—</div><div class="sc-u" id="c-su"></div></div>
+<div class="alrt" id="alrt">⏳ Conectando ao Firebase…</div>
+
+<!-- PAINEL -->
+<div class="pg on" id="pg-painel">
+  <div class="card-grid">
+    <div class="card" style="border-top-color:#c0392b"><div class="card-label">PM₂.₅</div><div class="card-value" id="v-pm" style="color:#c0392b">—</div><div class="card-unit">µg/m³</div></div>
+    <div class="card" style="border-top-color:#27ae60"><div class="card-label">CO₂</div><div class="card-value" id="v-co" style="color:#27ae60">—</div><div class="card-unit">ppm</div></div>
+    <div class="card" style="border-top-color:#e67e22"><div class="card-label">Temperatura</div><div class="card-value" id="v-te" style="color:#e67e22">—</div><div class="card-unit">°C</div></div>
+    <div class="card" style="border-top-color:#1d5fa8"><div class="card-label">Umidade</div><div class="card-value" id="v-hu" style="color:#1d5fa8">—</div><div class="card-unit">%</div></div>
+    <div class="card" style="border-top-color:#8e44ad"><div class="card-label">Registros</div><div class="card-value" id="v-n" style="color:#8e44ad">0</div><div class="card-unit">dias</div></div>
+    <div class="card" style="border-top-color:#e8a020"><div class="card-label">Período</div><div class="card-value" id="v-p" style="font-size:.7rem;margin-top:8px;color:#e8a020">—</div><div class="card-unit"></div></div>
+  </div>
+  <h2>Últimos Registros</h2>
+  <table>
+    <thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
 </div>
 
-<!-- ═══ PAINEL ═══ -->
-<div class="pg" id="pg-painel" style="display:block">
-  <div class="fbar">
-    <span class="fbar-l">De</span>
-    <input type="date" id="d-from">
-    <span class="fbar-l">até</span>
-    <input type="date" id="d-to">
-    <div class="qbs">
-      <button class="qb" onclick="qf(30,this)">30d</button>
-      <button class="qb" onclick="qf(90,this)">90d</button>
-      <button class="qb" onclick="qf(180,this)">6m</button>
-      <button class="qb on" onclick="qf(0,this)">Tudo</button>
-    </div>
-    <button class="ab" onclick="applyF()">▶ Aplicar</button>
-    <button class="dl-all" onclick="dlCSVall()">⬇ CSV do período</button>
-  </div>
-
-  <div class="sh"><div class="sh-t">PM₂.₅ — Série Temporal</div><div class="sh-hr"></div></div>
-  <div class="sd"><strong>PM₂.₅:</strong> partículas &lt;2,5 µm de queimadas, veículos e indústria. CONAMA 491/2022: PI1=15 µg/m³ (laranja) · PI2=25 µg/m³ (vermelho). Selecione um intervalo arrastando sobre o gráfico.</div>
-  <div class="cc">
-    <div class="cc-h">
-      <div><div class="cc-t">Concentração Diária de PM₂.₅ (µg/m³)</div><div class="cc-s">Estação UNEMAT · Cáceres-MT · arraste para selecionar período</div></div>
-      <div class="cc-acts">
-        <button class="act g" onclick="dlCSV('pm25','PM2.5')">⬇ CSV</button>
-        <button class="act" onclick="dlSVG('svg-pm25','PM2.5_serie')">⬇ PNG</button>
-      </div>
-    </div>
-    <div class="chart-wrap" id="wrap-pm25" style="height:260px"></div>
-    <div class="cw-info">Arraste = selecionar período · clique duplo = reset</div>
-  </div>
-
-  <div class="sh"><div class="sh-t">Variáveis Atmosféricas</div><div class="sh-hr"></div></div>
-  <div class="sd">CO₂, temperatura e umidade no período selecionado. A umidade cai abruptamente na seca (jun–set) enquanto a temperatura sobe — condição que favorece queimadas.</div>
-  <div class="g3">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">CO₂ (ppm)</div></div><div class="cc-acts"><button class="act g" onclick="dlCSV('co2','CO2')">⬇ CSV</button><button class="act" onclick="dlSVG('svg-co2','CO2')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-co2" style="height:200px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Temperatura (°C)</div></div><div class="cc-acts"><button class="act g" onclick="dlCSV('temp','Temp')">⬇ CSV</button><button class="act" onclick="dlSVG('svg-temp','Temp')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-temp" style="height:200px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Umidade Relativa (%)</div></div><div class="cc-acts"><button class="act g" onclick="dlCSV('humidity','Umidade')">⬇ CSV</button><button class="act" onclick="dlSVG('svg-hum','Umidade')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-hum" style="height:200px"></div>
-    </div>
-  </div>
-
-  <div class="sh"><div class="sh-t">Sazonalidade Mensal — Boxplots</div><div class="sh-hr"></div></div>
-  <div class="sd">Boxplots mensais reais: linha=mediana · caixa=IQR (Q1–Q3) · bigodes=1,5×IQR · ponto=média. Cores: <b style="color:#1d5fa8">■ Chuvosa</b> · <b style="color:#27ae60">■ Trans.Chuva→Seca</b> · <b style="color:#e67e22">■ Seca</b> · <b style="color:#8e44ad">■ Trans.Seca→Chuva</b>.</div>
-  <div class="g2">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">PM₂.₅ por Mês — Boxplot</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-pm-bp','PM2.5_boxplot')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-pm-bp" style="height:260px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Temperatura por Mês — Boxplot</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-te-bp','Temp_boxplot')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-te-bp" style="height:260px"></div>
-    </div>
-  </div>
-
-  <div class="sh"><div class="sh-t">Correlações Atmosféricas</div><div class="sh-hr"></div></div>
-  <div class="sd">Temperatura × Umidade: r≈−0,75 (forte anticorrelação). PM₂.₅ × Umidade: r≈−0,26 (chuva lava partículas). Dispersão colorida por estação.</div>
-  <div class="g2">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Matriz de Correlação de Pearson</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-corr','Correlacoes')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-corr" style="height:240px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Temperatura × Umidade por Estação</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-tu','Temp_Umidade')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-tu" style="height:240px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ ANÁLISE ═══ -->
-<div class="pg" id="pg-analise">
-  <div class="sh" style="margin-top:.9rem"><div class="sh-t">Índice Termopoliuidor (ITP)</div><div class="sh-hr"></div></div>
-  <div class="sd"><strong>ITP = (Z_Temp + Z_PM₂.₅) / √2.</strong> ITP≥1=Alerta · ITP≥2=Crítico. Dias quentes E poluídos simultaneamente = máximo risco à saúde.</div>
-  <div class="cc">
-    <div class="cc-h">
-      <div><div class="cc-t">Série Temporal ITP — colorida por intensidade</div><div class="cc-s">Azul=frio/limpo · verde=neutro · laranja=alerta · vermelho=crítico</div></div>
-      <div class="cc-acts"><button class="act g" onclick="dlCSV('itp','ITP')">⬇ CSV</button><button class="act" onclick="dlSVG('svg-itp-ts','ITP_serie')">⬇ PNG</button></div>
-    </div>
-    <div class="chart-wrap" id="wrap-itp-ts" style="height:240px"></div>
-  </div>
-  <div class="g2">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">ITP por Estação — Boxplot</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-itp-bp','ITP_boxplot')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-itp-bp" style="height:260px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Classes do ITP por Estação (%)</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-itp-st','ITP_classes')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-itp-st" style="height:260px"></div>
-    </div>
-  </div>
-  <div class="sh"><div class="sh-t">ITP Mensal e Heatmap</div><div class="sh-hr"></div></div>
-  <div class="g2">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">ITP Mensal — Boxplot</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-itp-mbp','ITP_mensal')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-itp-mbp" style="height:250px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">ITP Médio — Heatmap Ano × Mês</div><div class="cc-s">Set/2024 = episódio crítico ITP≈+6,0</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-itp-hm','ITP_heatmap')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-itp-hm" style="height:250px"></div>
-    </div>
-  </div>
-  <div class="sh"><div class="sh-t">Quadrantes e Lag T × PM₂.₅</div><div class="sh-hr"></div></div>
-  <div class="g2">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Dispersão T × PM₂.₅ — Quadrantes</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-quad','Quadrantes')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-quad" style="height:250px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Regime por Estação (%)</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-q-bar','Regime_Estacao')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-q-bar" style="height:250px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ ONDAS ═══ -->
-<div class="pg" id="pg-ondas">
-  <div class="sh" style="margin-top:.9rem"><div class="sh-t">Ondas de Calor e Anomalias</div><div class="sh-hr"></div></div>
-  <div class="sd"><strong>Onda de calor:</strong> T ≥+3°C acima da climatologia mensal por ≥5 dias. <strong>Mai/2024 (12 dias)</strong> e <strong>Set/2024 (ITP=+6,0)</strong> foram os episódios mais intensos registrados em Cáceres.</div>
-  <div class="cc">
-    <div class="cc-h">
-      <div><div class="cc-t">Temperatura Diária vs. Referência Climatológica</div><div class="cc-s">Sombreado=amplitude Tmin–Tmax · ★=anomalia≥+5°C · linha tracejada=limiar+5°C</div></div>
-      <div class="cc-acts"><button class="act g" onclick="dlCSV('temp','Temp_OndaCalor')">⬇ CSV</button><button class="act" onclick="dlSVG('svg-hw-t','OndaCalor_temp')">⬇ PNG</button></div>
-    </div>
-    <div class="chart-wrap" id="wrap-hw-t" style="height:240px"></div>
-  </div>
-  <div class="cc">
-    <div class="cc-h">
-      <div><div class="cc-t">Anomalia Térmica Diária (T − Climatologia do Mês)</div><div class="cc-s">Azul=negativo · laranja=+0a3°C · vermelho=+3a5°C · roxo=&gt;+5°C</div></div>
-      <div class="cc-acts"><button class="act" onclick="dlSVG('svg-hw-an','Anomalia')">⬇ PNG</button></div>
-    </div>
-    <div class="chart-wrap" id="wrap-hw-an" style="height:200px"></div>
-  </div>
-  <div class="cc">
-    <div class="cc-h">
-      <div><div class="cc-t">PM₂.₅ e Umidade — Série Temporal</div></div>
-      <div class="cc-acts"><button class="act" onclick="dlSVG('svg-hw-pu','PM25_Umidade')">⬇ PNG</button></div>
-    </div>
-    <div class="chart-wrap" id="wrap-hw-pu" style="height:200px"></div>
-  </div>
-  <div class="sh"><div class="sh-t">Índice de Calor (IC) — Sensação Térmica Real</div><div class="sh-hr"></div></div>
-  <div class="sd">IC = f(Temperatura, Umidade). Faixas NWS: <b style="color:#1d5fa8">Confortável&lt;27°C</b> · <b style="color:#d29922">Cautela 27–32°C</b> · <b style="color:#e67e22">Ext.Cautela 32–41°C</b> · <b style="color:#c0392b">Perigo&gt;41°C</b>.</div>
-  <div class="g2">
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">IC Mensal — Boxplot Real</div><div class="cc-s">Faixas de risco sombreadas</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-ic-bp','IC_mensal_boxplot')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-ic-bp" style="height:270px"></div>
-    </div>
-    <div class="cc">
-      <div class="cc-h"><div><div class="cc-t">Classes de Risco Térmico por Estação (%)</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-ic-st','IC_risco')">⬇ PNG</button></div></div>
-      <div class="chart-wrap" id="wrap-ic-st" style="height:270px"></div>
-    </div>
-  </div>
-  <div class="cc">
-    <div class="cc-h"><div><div class="cc-t">IC Heatmap — Hora × Mês</div><div class="cc-s">Pico 11h–15h · Jul = mês mais fresco</div></div><div class="cc-acts"><button class="act" onclick="dlSVG('svg-ic-hm','IC_heatmap')">⬇ PNG</button></div></div>
-    <div class="chart-wrap" id="wrap-ic-hm" style="height:250px"></div>
-  </div>
-</div>
-
-<!-- ═══ UPLOAD ═══ -->
+<!-- UPLOAD -->
 <div class="pg" id="pg-upload">
-  <div style="max-width:720px;margin:.9rem auto">
-    <div class="sh"><div class="sh-t">Upload de Dados</div><div class="sh-hr"></div></div>
-    <div class="sd"><strong>Obrigatórias:</strong> date (AAAA-MM-DD) · pm25 · co2 · temp · humidity. <strong>Opcionais:</strong> temp_max · temp_min · season.</div>
-
-    <!-- Status Firebase -->
-    <div id="up-status" style="background:#f0f7ff;border:1.5px solid var(--blue);border-radius:8px;padding:.65rem 1rem;margin-bottom:.8rem;font-size:12px;color:#1e40af;display:flex;align-items:center;gap:8px">
-      <span id="up-status-dot" style="width:8px;height:8px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>
-      <span id="up-status-txt">Conectando ao Firebase…</span>
-    </div>
-
-    <div class="upz" ondragover="event.preventDefault()" ondrop="doDrop(event)">
-      <input type="file" accept=".csv" onchange="doFile(this.files[0])">
-      <div style="font-size:2.2rem;opacity:.3;margin-bottom:.4rem">📤</div>
-      <div style="font-size:.88rem;font-weight:600">Arraste o CSV ou clique aqui</div>
-      <div style="font-size:11px;color:var(--muted)">Separador vírgula · UTF-8 · substitui todos os dados anteriores</div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin:.7rem 0;flex-wrap:wrap">
-      <button class="m-pr" style="flex:1;min-width:140px" onclick="dlTpl()">⬇ Modelo CSV</button>
-      <button onclick="clearData()" style="flex:1;min-width:140px;background:#fee2e2;border:1.5px solid #fca5a5;color:#991b1b;padding:7px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit">
-        🗑 Apagar todos os dados
-      </button>
-    </div>
-
-    <div style="height:1px;background:var(--border);margin:.9rem 0"></div>
-    <div class="sh">
-      <div class="sh-t" style="font-size:.88rem">Registros no Firebase</div>
-      <div class="sh-hr"></div>
-      <span id="tb-count" style="font-size:11px;color:var(--muted);white-space:nowrap;margin-left:8px">0 registros</span>
-    </div>
-    <div class="tw">
-      <table class="tbl">
-        <thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th><th>IC</th><th>Qualidade</th><th>Ação</th></tr></thead>
-        <tbody id="tb-body"></tbody>
-      </table>
-    </div>
+  <h2>Upload de Dados</h2>
+  <p style="font-size:12px;color:#6c7280;margin-bottom:.8rem">Colunas obrigatórias: <code>date, pm25, co2, temp, humidity</code> · Opcionais: <code>temp_max, temp_min, season</code></p>
+  <div class="upz">
+    <input type="file" accept=".csv" onchange="doFile(this.files[0])">
+    <div style="font-size:2rem;opacity:.3">📤</div>
+    <p>Toque aqui para selecionar o CSV</p>
+    <small>Separador vírgula · UTF-8</small>
   </div>
+  <div style="text-align:center">
+    <button class="btn green" onclick="dlModelo()">⬇ Baixar Modelo CSV</button>
+    <button class="btn red" onclick="limpar()">🗑 Apagar todos os dados</button>
+  </div>
+  <div id="log">Aguardando…</div>
 </div>
 
-<!-- ═══ SOBRE ═══ -->
+<!-- SOBRE -->
 <div class="pg" id="pg-sobre">
-  <div style="max-width:1100px;margin:.9rem auto">
-    <div class="sh"><div class="sh-t">Equipe do Projeto</div><div class="sh-hr"></div></div>
-    <div class="tg">
-      <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🎓</div><div class="t-role">Coordenador</div><div class="t-name">Prof. Dr. Ernandes Sobreira Oliveira Junior</div><div class="t-info">Prof. Coordenador do Projeto SOPRO<br>UNEMAT · Campus Cáceres-MT<br>PPGCA · ProfÁgua · Licenciatura em Biologia</div></div>
-      <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🔬</div><div class="t-role">Doutorando</div><div class="t-name">Cleverson Ricardo Soares Viana</div><div class="t-info">PPGCA · UNEMAT Cáceres-MT</div></div>
-      <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">🌿</div><div class="t-role">Pesquisadora</div><div class="t-name">Maísa Consuelo dos Santos</div><div class="t-info">PPGCA · UNEMAT Cáceres-MT</div></div>
-      <div class="tc"><div style="font-size:1.5rem;margin-bottom:7px">💡</div><div class="t-role">Iniciação Científica</div><div class="t-name">Danielle Ferreira Dias</div><div class="t-info">Licenciatura Ciências Biológicas<br>UNEMAT Cáceres-MT</div></div>
-    </div>
-    <div class="sh" style="margin-top:1.2rem"><div class="sh-t">Estação e Parcerias</div><div class="sh-hr"></div></div>
-    <div class="g2">
-      <div class="tc"><div class="t-role">Estação de Monitoramento</div><div class="t-info" style="font-size:11.5px;line-height:1.85"><strong>📍 Cidade Universitária UNEMAT</strong>, Cáceres-MT<br>16°04'S · 57°41'W · ~118 m · desde Jun/2023<br><strong>Sensores:</strong> PM₂.₅ óptico · CO₂ NDIR · Temp/UR · Barômetro<br><strong>Contexto:</strong> Pantanal Norte · transição Cerrado/Pantanal</div></div>
-      <div class="tc"><div class="t-role">Vínculos</div><div class="t-info" style="font-size:11.5px;line-height:1.85"><strong>UNEMAT</strong> – Campus Cáceres · PPGCA · ProfÁgua<br><strong>Parcerias:</strong> UNESCO · Radboud University (NL)<br><strong>Projetos:</strong> Japuíra · Transforma-Ações<br><strong>Contato:</strong> (65) 99932-3724</div></div>
-    </div>
-  </div>
+  <h2>Sobre o SOPRO</h2>
+  <p style="font-size:13px;line-height:1.8;margin-bottom:.8rem">
+    <strong>Sistema de Observação da Qualidade do Ar · Cáceres-MT</strong><br>
+    Estação Meteorológica · Cidade Universitária UNEMAT · 16°04'S · 57°41'W<br>
+    Monitoramento contínuo de PM₂.₅, CO₂, Temperatura e Umidade desde Jun/2023.
+  </p>
+  <p style="font-size:13px;line-height:1.8">
+    <strong>Prof. Coordenador:</strong> Dr. Ernandes Sobreira Oliveira Junior<br>
+    UNEMAT · Campus Cáceres-MT · PPGCA · ProfÁgua · Licenciatura em Biologia<br><br>
+    <strong>Equipe:</strong> Cleverson Ricardo Soares Viana · Maísa Consuelo dos Santos · Danielle Ferreira Dias
+  </p>
 </div>
-
-<!-- FIREBASE MODAL -->
-<div class="ov" id="ov">
-  <div class="mbox">
-    <div class="m-t">&#128293; Firebase &#8212; Som Ambiental / UNEMAT</div>
-    <div class="m-s">Esta plataforma usa o Firebase <strong>som-ambiental</strong> (UNEMAT). Os dados ficam em <code>sopro/daily</code> e aparecem em qualquer dispositivo ou navegador.</div>
-    <div class="m-note" style="margin-top:.5rem">
-      <strong>&#128228; Como carregar seus dados:</strong><br>
-      Va para a aba <strong>Upload</strong> e faca upload do seu CSV diario.<br>
-      Os dados sao salvos no Firebase automaticamente.<br><br>
-      <strong>Formato do CSV:</strong><br>
-      <code>date, pm25, co2, temp, humidity, temp_max, temp_min, season</code>
-    </div>
-    <div class="m-acts">
-      <button class="m-pr" onclick="connectFB()">&#128260; Reconectar</button>
-      <button class="m-sc" onclick="closeOv()">Fechar</button>
-    </div>
-    <div id="m-st"></div>
-  </div>
-</div>
-    <div id="m-st"></div>
-  </div>
-</div>
-
-<div class="tz" id="tz"></div>
-
-<footer>
-  <div class="ft">SOPRO · UNEMAT Cáceres-MT · 2023–presente</div>
-  <div class="fbs"><div class="fb">PPGCA</div><div class="fb">ProfÁgua</div><div class="fb">Japuíra</div><div class="fb">UNESCO SA-1383/2025</div></div>
-</footer>
 
 <script>
-'use strict';
-/* ═══ CONSTANTS ═══ */
-const C={r:'#c0392b',b:'#1d5fa8',o:'#e67e22',g:'#27ae60',p:'#8e44ad',
-         a:'#f39c12',gr:'#95a5a6',lb:'#aed6f1',db:'#1a5276',
-         seas:{Chuvosa:'#1d5fa8','Trans.Chuva→Seca':'#27ae60',Seca:'#e67e22','Trans.Seca→Chuva':'#8e44ad'}};
-const SEAS=['Chuvosa','Trans.Chuva→Seca','Seca','Trans.Seca→Chuva'];
-const MOS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const CLIM=[31,31,32,31,29,27,26,28,30,32,32,31];
-const MC=[C.b,C.b,C.b,C.g,C.g,C.o,C.o,C.o,C.o,C.p,C.p,C.b];
+var DB = 'https://brasa-pantanal-default-rtdb.firebaseio.com';
+var ALL = [];
 
-/* ═══ DATA ═══ */
-let ALL=[],FIL=[];
-
-function itp(d){const zt=(d.temp-30)/5,zp=((d.pm25||0)-15)/18;return +((zt+zp)/Math.SQRT2).toFixed(2);}
-function ic(d){if(!d.temp||!d.humidity)return null;const T=d.temp,R=d.humidity/100;return +(T+.348*(R*6.1*Math.exp(17.27*T/(237.3+T)))-4).toFixed(1);}
-
-function genDemo(){return[];}
-
-/* ═══ FIREBASE ═══ */
-/* ── FIREBASE SOM-AMBIENTAL (fixo) ── */
-const DB_URL='https://brasa-pantanal-default-rtdb.firebaseio.com';
-function openFBModal(){document.getElementById('ov').classList.add('on');}
-function closeOv(){document.getElementById('ov').classList.remove('on');}
-function setDot(c,t){
-  document.getElementById('fb-dot').className='dot '+c;
-  document.getElementById('fb-lbl').textContent=t;
-  /* Also update upload page status */
-  const upDot=document.getElementById('up-status-dot');
-  const upTxt=document.getElementById('up-status-txt');
-  if(upDot&&upTxt){
-    upDot.style.background=c==='ok'?'#27ae60':c==='err'?'#c0392b':'#e8a020';
-    upTxt.textContent=c==='ok'?'Firebase conectado — pronto para upload':
-                      c==='err'?'Sem conexão com Firebase':'Conectando ao Firebase…';
-  }
+function log(msg){
+  var el = document.getElementById('log');
+  if(el) el.textContent += '\n' + new Date().toLocaleTimeString() + ' ' + msg;
 }
 
-function connectFB(){
-  setDot('demo','● Conectando…');
-  fetch(DB_URL+'/sopro/daily.json?shallow=true&limitToFirst=1')
-    .then(function(r){
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      setDot('ok','● Firebase OK');
-      window._fb=true;
-      loadFB();
-    })
-    .catch(function(e){
-      setDot('err','● Sem conexão');
-      toast('Firebase indisponível: '+e.message,'w');
-      boot();
-    });
-}function loadFB(){
-  fetch(DB_URL+'/sopro/daily.json')
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(!data){
-        setDot('demo','● Sem dados');
-        toast('Firebase vazio — faça upload na aba Upload','w');
-        boot();return;
-      }
-      var r=Object.values(data);
-      r.sort(function(a,b){return a.date.localeCompare(b.date);});
-      ALL=r.map(function(d){
-        return Object.assign({},d,{
-          itp:d.itp!=null?d.itp:itp(d),
-          ic:d.ic!=null?d.ic:ic(d)
-        });
-      });
-      FIL=ALL.slice();
-      setDot('ok','● '+ALL.length+' registros');
-      renderAll();updateCards();renderTable();
-      toast('✓ '+ALL.length+' registros carregados','ok');
-    })
-    .catch(function(e){
-      toast('Erro ao carregar dados: '+e.message,'w');
-      boot();
-    });
-}function boot(){
-  ALL=[];FIL=[];
-  setDot('demo','● Aguardando dados');
-  showEmpty();
-}
-function showEmpty(){
-  /* Limpa todos os gráficos e mostra mensagem */
-  const ids=['wrap-pm25','wrap-co2','wrap-temp','wrap-hum','wrap-pm-bp','wrap-te-bp',
-    'wrap-corr','wrap-tu','wrap-itp-ts','wrap-itp-bp','wrap-itp-st','wrap-itp-mbp',
-    'wrap-itp-hm','wrap-quad','wrap-q-bar','wrap-hw-t','wrap-hw-an','wrap-ic-bp',
-    'wrap-ic-st','wrap-ic-hm'];
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:13px;font-style:italic;flex-direction:column;gap:8px"><span style="font-size:2rem;opacity:.3">📤</span><span>Sem dados — faça upload na aba <strong>Upload</strong></span></div>';
-  });
-  /* Zera cards */
-  ['c-pm','c-co','c-te','c-hu','c-it'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
-  document.getElementById('c-se').textContent='—';
-  document.getElementById('h-n').textContent='0';
-  document.getElementById('h-max').textContent='—';
-  document.getElementById('h-crit').textContent='—';
-  document.getElementById('h-per').textContent='—';
-  document.getElementById('alrt-t').innerHTML='Nenhum dado carregado. Vá em <strong>Upload</strong> e envie seu CSV.';
-  document.getElementById('alrt').className='alrt y';
+function setStatus(txt, cls){
+  var el = document.getElementById('fb-status');
+  el.textContent = txt;
+  el.className = cls || '';
 }
 
-/* ═══ NAV ═══ */
-function goPage(id){
-  document.querySelectorAll('.pg').forEach(function(p){p.style.display='none';});
-  var pg=document.getElementById('pg-'+id);
-  if(pg)pg.style.display='block';
-  ['painel','analise','ondas','upload','sobre'].forEach(function(n){
-    var b=document.getElementById('nb-'+n);
-    if(!b)return;
-    if(n===id){b.style.color='#fff';b.style.borderBottomColor='#1d5fa8';b.style.fontWeight='700';}
-    else{b.style.color='#8b9ab3';b.style.borderBottomColor='transparent';b.style.fontWeight='600';}
-  });
-  if(id==='analise')setTimeout(renderAnalise,50);
-  if(id==='ondas')setTimeout(renderOndas,50);
-  if(id==='upload')setTimeout(renderTable,50);
+function setAlrt(txt, cls){
+  var el = document.getElementById('alrt');
+  el.textContent = txt;
+  el.className = 'alrt ' + (cls||'');
+}
+
+// NAV
+function go(id, btn){
+  document.querySelectorAll('.pg').forEach(function(p){p.style.display='none';p.classList.remove('on');});
+  document.getElementById('pg-'+id).style.display='block';
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('on');});
+  if(btn) btn.classList.add('on');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-/* ═══ FILTER ═══ */
-function qf(days,btn){
-  document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  if(!days){FIL=[...ALL];document.getElementById('d-from').value='';document.getElementById('d-to').value='';}
-  else{
-    const to=new Date(),from=new Date();from.setDate(from.getDate()-days);
-    const f=from.toISOString().slice(0,10),t=to.toISOString().slice(0,10);
-    document.getElementById('d-from').value=f;document.getElementById('d-to').value=t;
-    FIL=ALL.filter(d=>d.date>=f&&d.date<=t);
-  }
-  renderPainel();
-}
-function applyF(){
-  const f=document.getElementById('d-from').value,t=document.getElementById('d-to').value;
-  FIL=ALL.filter(d=>(!f||d.date>=f)&&(!t||d.date<=t));
-  document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
-  renderPainel();
-  toast('Filtro: '+FIL.length+' registros','ok');
-}
-
-/* ═══ CARDS ═══ */
-function updateCards(){
-  const D=ALL;if(!D.length){showEmpty();return;}
-  const avg=k=>{const a=D.filter(d=>d[k]!=null);return a.length?a.reduce((s,d)=>s+d[k],0)/a.length:null;};
-  const f=(v,n=1)=>v!=null?v.toFixed(n):'—';
-  document.getElementById('c-pm').textContent=f(avg('pm25'));
-  document.getElementById('c-co').textContent=f(avg('co2'),0);
-  document.getElementById('c-te').textContent=f(avg('temp'));
-  document.getElementById('c-hu').textContent=f(avg('humidity'),0)+'%';
-  document.getElementById('c-it').textContent=f(avg('itp'));
-  const last=D[D.length-1];
-  const sn={Chuvosa:'Dez–Mar','Trans.Chuva→Seca':'Abr–Mai',Seca:'Jun–Set','Trans.Seca→Chuva':'Out–Nov'};
-  document.getElementById('c-se').textContent=last?.season||'—';
-  document.getElementById('c-su').textContent=sn[last?.season]||'';
-  document.getElementById('h-n').textContent=D.length;
-  document.getElementById('h-max').textContent=Math.max(...D.map(d=>d.pm25||0)).toFixed(0);
-  document.getElementById('h-crit').textContent=D.filter(d=>d.pm25>25).length;
-  const p1=D[0]?.date?.slice(0,7)||'?',p2=D[D.length-1]?.date?.slice(0,7)||'?';
-  document.getElementById('h-per').textContent=p1+'–'+p2;
-  const pm=last?.pm25||0;
-  const bar=document.getElementById('alrt'),txt=document.getElementById('alrt-t');
-  if(pm>60){bar.className='alrt r';txt.innerHTML='🔴 <strong>Alerta Crítico</strong> — PM₂.₅='+pm+' µg/m³. Evite exposição ao ar livre.';}
-  else if(pm>25){bar.className='alrt y';txt.innerHTML='🟡 <strong>Alerta Moderado</strong> — PM₂.₅='+pm+' µg/m³. Atenção: crianças, idosos, cardiopatas.';}
-  else{bar.className='alrt g';txt.innerHTML='🟢 <strong>Qualidade Boa</strong> — PM₂.₅='+pm+' µg/m³. Dentro dos padrões CONAMA 491/2022.';}
-}
-
-/* ═══ RENDER ALL ═══ */
-function renderAll(){renderPainel();}
-
-/* ════════════════════════════════════════════
-   SVG ENGINE — tudo desenhado em SVG puro
-════════════════════════════════════════════ */
-
-/* Compute quantiles for boxplot */
-function bxStats(arr){
-  if(!arr.length)return null;
-  const s=[...arr].sort((a,b)=>a-b);
-  const q=f=>s[Math.max(0,Math.min(s.length-1,Math.floor(s.length*f)))];
-  const q1=q(.25),q3=q(.75),iqr=q3-q1;
-  return{min:Math.max(s[0],q1-1.5*iqr),q1,med:q(.5),q3,
-         max:Math.min(s[s.length-1],q3+1.5*iqr),
-         mean:s.reduce((a,b)=>a+b)/s.length,
-         out:s.filter(v=>v<q1-1.5*iqr||v>q3+1.5*iqr)};
-}
-
-/* Color interpolation for heatmap */
-function heatColor(t,scheme){
-  /* t in [0,1] */
-  if(scheme==='RdBu'){
-    if(t<.5){const u=t*2;return `rgb(${Math.round(41+214*u)},${Math.round(128+127*u)},${Math.round(185+70*u)})`;}
-    const u=(t-.5)*2;return `rgb(${Math.round(255-63*u)},${Math.round(255-198*u)},${Math.round(255-212*u)})`;
-  }
-  /* heat: blue→white→orange→red */
-  if(t<.4){const u=t/.4;return `rgb(${Math.round(29+226*u)},${Math.round(95+160*u)},${Math.round(168+87*u)})`;}
-  if(t<.65){const u=(t-.4)/.25;return `rgb(${Math.round(255)},${Math.round(255-55*u)},${Math.round(255-255*u)})`;}
-  const u=(t-.65)/.35;return `rgb(${Math.round(255)},${Math.round(200-200*u)},0)`;
-}
-
-/* Base SVG layout */
-function svgLayout(W,H,pad){
-  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
-  return{W,H,pad,cW,cH,
-    toX:(v,lo,hi)=>pad.l+cW*(v-lo)/(hi-lo||1),
-    toY:(v,lo,hi)=>pad.t+cH*(1-(v-lo)/(hi-lo||1)),
-    toYpct:(v)=>pad.t+cH*(1-v/100)};
-}
-function getW(id){
-  const e=document.getElementById(id);
-  if(!e)return 640;
-  const w=e.getBoundingClientRect().width||e.clientWidth||e.offsetWidth;
-  if(w>10)return w;
-  /* Fallback: walk up to find a container with width */
-  let p=e.parentElement;
-  while(p){const pw=p.getBoundingClientRect().width;if(pw>10)return pw;p=p.parentElement;}
-  return document.documentElement.clientWidth||window.innerWidth||640;
-}
-function getH(id){
-  const e=document.getElementById(id);
-  if(!e)return 280;
-  return e.getBoundingClientRect().height||e.clientHeight||e.offsetHeight||280;
-}
-
-/* Draw an SVG into a wrapper div */
-function putSVG(wrapId,svgId,svg){
-  const el=document.getElementById(wrapId);
-  if(!el)return;
-  el.innerHTML=svg;
-  const s=el.querySelector('svg');
-  if(s)s.id=svgId;
-}
-
-/* ─ Line/Bar series chart ─ */
-function svgTimeSeries(data,key,color,refLines,wrapId,svgId){
-  const el=document.getElementById(wrapId);
-  if(!el)return;
-  const W=getW(wrapId), H=getH(wrapId)||220;
-  const pad={l:52,r:14,t:14,b:42};
-  const L=svgLayout(W,H,pad);
-  const vals=data.map(d=>d[key]).filter(v=>v!=null);
-  if(!vals.length)return;
-  const lo=0, hi=Math.max(...vals)*1.08;
-  const step=Math.max(1,Math.floor(data.length/280));
-  const Ds=data.filter((_,i)=>i%step===0);
-
-  /* color per value for PM2.5 */
-  let bars='';
-  const bw=Math.max(1,L.cW/Ds.length*0.9);
-  Ds.forEach((d,i)=>{
-    const v=d[key];if(v==null)return;
-    const x=L.toX(i,0,Ds.length-1);
-    const y=L.toY(v,lo,hi), h0=L.toY(0,lo,hi)-y;
-    let fill=color;
-    if(key==='pm25'){fill=v>60?C.r:v>25?C.o:v>10?C.a:'#27ae6088';}
-    if(key==='itp'){fill=v>=2?C.r:v>=1?C.a:v>=0?C.g:C.b;}
-    bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(.5,h0).toFixed(1)}" fill="${fill}" opacity=".85"/>`;
-  });
-
-  /* Grid */
-  let grid='',yticks='';
-  const nticks=5;
-  for(let i=0;i<=nticks;i++){
-    const v=lo+(hi-lo)*i/nticks;
-    const y=L.toY(v,lo,hi);
-    grid+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="#e8eaed" stroke-width="1"/>`;
-    yticks+=`<text x="${pad.l-6}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#6c7280">${v.toFixed(v<10?1:0)}</text>`;
-  }
-
-  /* Ref lines */
-  let refs='';
-  (refLines||[]).forEach(r=>{
-    const y=L.toY(r.v,lo,hi);
-    refs+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="${r.c}" stroke-width="1.4" stroke-dasharray="5,3"/>`;
-    refs+=`<text x="${pad.l+L.cW-3}" y="${(y-3).toFixed(1)}" text-anchor="end" font-size="9" fill="${r.c}">${r.label}</text>`;
-  });
-
-  /* X axis ticks — date labels */
-  let xticks='';
-  const nxt=Math.min(10,Ds.length);
-  for(let i=0;i<nxt;i++){
-    const idx=Math.floor(i*(Ds.length-1)/(nxt-1));
-    const x=L.toX(idx,0,Ds.length-1);
-    const lbl=Ds[idx]?.date?.slice(0,7)||'';
-    xticks+=`<text x="${x.toFixed(1)}" y="${(H-pad.b+16).toFixed(1)}" text-anchor="middle" font-size="9" fill="#6c7280">${lbl}</text>`;
-  }
-
-  /* Axis lines */
-  const ax=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>
-  <line x1="${pad.l}" y1="${pad.t+L.cH}" x2="${pad.l+L.cW}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>`;
-
-  /* Drag-to-select overlay */
-  const overlay=`<rect id="sel-${svgId}" x="0" y="0" width="0" height="${L.cH}" fill="rgba(29,95,168,.12)" stroke="#1d5fa8" stroke-width="1" stroke-dasharray="3,2" transform="translate(${pad.l},${pad.t})" pointer-events="none"/>`;
-
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;background:#fff">
-    ${grid}${refs}${bars}${ax}${xticks}${yticks}${overlay}
-    <text transform="translate(12,${(pad.t+L.cH/2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">${key==='pm25'?'µg/m³':key==='co2'?'ppm':key==='temp'?'°C':key==='humidity'?'%':key==='itp'?'ITP':''}</text>
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
-  addDragSelect(svgId,wrapId,pad,L,Ds);
-}
-
-/* ─ Line chart ─ */
-function svgLine(data,key,color,wrapId,svgId,yLabel,refLines){
-  const el=document.getElementById(wrapId);if(!el)return;
-  const W=getW(wrapId),H=getH(wrapId)||200;
-  const pad={l:52,r:14,t:12,b:38};
-  const L=svgLayout(W,H,pad);
-  const vals=data.map(d=>d[key]).filter(v=>v!=null);
-  if(!vals.length)return;
-  const lo=Math.min(...vals)*.97, hi=Math.max(...vals)*1.03;
-  const step=Math.max(1,Math.floor(data.length/200));
-  const Ds=data.filter((_,i)=>i%step===0);
-
-  let pts=Ds.map((d,i)=>{
-    const v=d[key];if(v==null)return null;
-    return[L.toX(i,0,Ds.length-1),L.toY(v,lo,hi)];
-  }).filter(Boolean);
-
-  const path='M'+pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join('L');
-  const fill='M'+pts[0].map(v=>v.toFixed(1)).join(',')+' L'+pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join('L')+` L${pts[pts.length-1][0].toFixed(1)},${L.toY(0,lo,hi).toFixed(1)} L${pts[0][0].toFixed(1)},${L.toY(0,lo,hi).toFixed(1)} Z`;
-
-  let grid='',yticks='';
-  for(let i=0;i<=5;i++){
-    const v=lo+(hi-lo)*i/5, y=L.toY(v,lo,hi);
-    grid+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="#e8eaed" stroke-width="1"/>`;
-    yticks+=`<text x="${pad.l-6}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#6c7280">${v.toFixed(1)}</text>`;
-  }
-  let refs='';
-  (refLines||[]).forEach(r=>{
-    const y=L.toY(r.v,lo,hi);
-    refs+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="${r.c}" stroke-width="1.4" stroke-dasharray="5,3"/>`;
-    refs+=`<text x="${pad.l+L.cW-3}" y="${(y-3).toFixed(1)}" text-anchor="end" font-size="9" fill="${r.c}">${r.label}</text>`;
-  });
-
-  let xticks='';
-  const nxt=Math.min(8,Ds.length);
-  for(let i=0;i<nxt;i++){
-    const idx=Math.floor(i*(Ds.length-1)/(nxt-1));
-    const x=L.toX(idx,0,Ds.length-1);
-    xticks+=`<text x="${x.toFixed(1)}" y="${H-pad.b+14}" text-anchor="middle" font-size="9" fill="#6c7280">${Ds[idx]?.date?.slice(0,7)||''}</text>`;
-  }
-  const ax=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>
-  <line x1="${pad.l}" y1="${pad.t+L.cH}" x2="${pad.l+L.cW}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>`;
-
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;background:#fff">
-    ${grid}${refs}
-    <path d="${fill}" fill="${color}" opacity=".12"/>
-    <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8"/>
-    ${ax}${xticks}${yticks}
-    <text transform="translate(12,${(pad.t+L.cH/2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">${yLabel||''}</text>
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
-}
-
-/* ─ REAL SVG Boxplot ─ */
-function svgBoxplot(labels,stats,colors,wrapId,svgId,yLabel,yMinIn,yMaxIn,refLines){
-  const el=document.getElementById(wrapId);if(!el)return;
-  const W=getW(wrapId),H=getH(wrapId)||320;
-  const pad={l:52,r:16,t:14,b:44};
-  const L=svgLayout(W,H,pad);
-  const valid=stats.filter(Boolean);
-  if(!valid.length)return;
-  let lo=yMinIn!=null?yMinIn:Math.min(...valid.map(s=>s.min))*.95;
-  let hi=yMaxIn!=null?yMaxIn:Math.max(...valid.map(s=>s.max))*1.05;
-  if(lo===hi){lo-=1;hi+=1;}
-
-  const n=labels.length;
-  const bw=Math.min(L.cW/n*.55,38);
-
-  /* Background bands */
-  let bands='';
-  if(refLines&&refLines.length){
-    const sorted=[...refLines].sort((a,b)=>a.v-b.v);
-    const bandC=['rgba(243,156,18,.07)','rgba(230,126,34,.08)','rgba(192,57,43,.09)'];
-    sorted.forEach((r,i)=>{
-      const y1=L.toY(r.v,lo,hi), y0=i>0?L.toY(sorted[i-1].v,lo,hi):pad.t+L.cH;
-      bands+=`<rect x="${pad.l}" y="${y1.toFixed(1)}" width="${L.cW}" height="${(y0-y1).toFixed(1)}" fill="${bandC[i%bandC.length]}"/>`;
-    });
-  }
-
-  /* Grid + Y ticks */
-  let grid='',yticks='';
-  const nticks=6;
-  for(let i=0;i<=nticks;i++){
-    const v=lo+(hi-lo)*i/nticks, y=L.toY(v,lo,hi);
-    grid+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="#e8eaed" stroke-width="1"/>`;
-    yticks+=`<text x="${pad.l-6}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#6c7280">${v.toFixed(v<5&&v>-5?1:0)}</text>`;
-  }
-
-  /* Ref lines */
-  let refs='';
-  (refLines||[]).forEach(r=>{
-    const y=L.toY(r.v,lo,hi);
-    refs+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="${r.c}" stroke-width="1.5" stroke-dasharray="${r.dash||'5,3'}"/>`;
-    refs+=`<text x="${pad.l+L.cW+1}" y="${y.toFixed(1)}" dominant-baseline="middle" font-size="9" fill="${r.c}">${r.label}</text>`;
-  });
-
-  /* Boxes */
-  let boxes='';
-  stats.forEach((s,i)=>{
-    if(!s)return;
-    const cx=pad.l+L.cW*(i+.5)/n;
-    const col=Array.isArray(colors)?colors[i%colors.length]:colors||'#1d5fa8';
-    const yMin=L.toY(s.min,lo,hi), yMax=L.toY(s.max,lo,hi);
-    const yQ1=L.toY(s.q1,lo,hi), yQ3=L.toY(s.q3,lo,hi);
-    const yMed=L.toY(s.med,lo,hi), yMean=L.toY(s.mean,lo,hi);
-
-    /* Whisker vertical line */
-    boxes+=`<line x1="${cx.toFixed(1)}" y1="${yMax.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yMin.toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`;
-    /* Whisker caps */
-    [`${yMax}`,`${yMin}`].forEach(y=>{
-      boxes+=`<line x1="${(cx-bw*.32).toFixed(1)}" y1="${parseFloat(y).toFixed(1)}" x2="${(cx+bw*.32).toFixed(1)}" y2="${parseFloat(y).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`;
-    });
-    /* IQR box */
-    const boxY=Math.min(yQ1,yQ3), boxH=Math.abs(yQ1-yQ3);
-    boxes+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${boxY.toFixed(1)}" width="${bw.toFixed(1)}" height="${boxH.toFixed(1)}" fill="${col}" opacity=".22" stroke="${col}" stroke-width="1.8" rx="1"/>`;
-    /* Median line — thick */
-    boxes+=`<line x1="${(cx-bw/2).toFixed(1)}" y1="${yMed.toFixed(1)}" x2="${(cx+bw/2).toFixed(1)}" y2="${yMed.toFixed(1)}" stroke="${col}" stroke-width="3"/>`;
-    /* Mean circle */
-    boxes+=`<circle cx="${cx.toFixed(1)}" cy="${yMean.toFixed(1)}" r="3.2" fill="white" stroke="${col}" stroke-width="1.5"/>`;
-    /* X label */
-    boxes+=`<text x="${cx.toFixed(1)}" y="${(pad.t+L.cH+14).toFixed(1)}" text-anchor="middle" font-size="10" fill="#374151">${labels[i]}</text>`;
-  });
-
-  /* Axis */
-  const ax=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>
-  <line x1="${pad.l}" y1="${pad.t+L.cH}" x2="${pad.l+L.cW}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>`;
-
-  /* Legend */
-  const leg=`<g transform="translate(${pad.l},${(pad.t+L.cH+28).toFixed(1)})">
-    <line x1="0" y1="4" x2="16" y2="4" stroke="#555" stroke-width="3"/><text x="20" y="8" font-size="9" fill="#555">Mediana</text>
-    <circle cx="55" cy="4" r="3" fill="white" stroke="#555" stroke-width="1.5"/><text x="61" y="8" font-size="9" fill="#555">Média</text>
-    <rect x="100" y="1" width="10" height="7" fill="rgba(100,100,100,.22)" stroke="#555" stroke-width="1"/><text x="114" y="8" font-size="9" fill="#555">IQR</text>
-  </g>`;
-
-  /* Y title */
-  const ytitle=`<text transform="translate(13,${(pad.t+L.cH/2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">${yLabel||''}</text>`;
-
-  const svgH=H+36;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${svgH}" style="width:100%;height:${svgH}px;background:#fff">
-    ${bands}${grid}${refs}${boxes}${ax}${yticks}${ytitle}${leg}
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
-}
-
-/* ─ SVG Stacked Bar ─ */
-function svgStackedBar(labels,dataPerGroup,seriesLabels,seriesColors,wrapId,svgId){
-  const el=document.getElementById(wrapId);if(!el)return;
-  const W=getW(wrapId),H=getH(wrapId)||300;
-  const legRows=Math.ceil(seriesLabels.length/2);
-  const legH=legRows*15+8;
-  const pad={l:48,r:12,t:12,b:36+legH};
-  const L=svgLayout(W,H,pad);
-  const n=labels.length;
-  const bw=Math.min(L.cW/n*.6,48);
-
-  /* Grid */
-  let grid='',yticks='';
-  [0,20,40,60,80,100].forEach(v=>{
-    const y=L.toYpct(v);
-    grid+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="#e8eaed" stroke-width="1"/>`;
-    yticks+=`<text x="${pad.l-6}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#6c7280">${v}%</text>`;
-  });
-
-  /* Bars */
-  let bars='',xlbls='';
-  labels.forEach((lbl,i)=>{
-    const vals=dataPerGroup[i];
-    const cx=pad.l+L.cW*(i+.5)/n;
-    let cumY=0;
-    vals.forEach((v,si)=>{
-      if(!v||v<=0)return;
-      const barH=L.cH*v/100;
-      const y=L.toYpct(cumY+v);
-      bars+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${barH.toFixed(1)}" fill="${seriesColors[si]}" opacity=".88"/>`;
-      if(barH>13){
-        bars+=`<text x="${cx.toFixed(1)}" y="${(y+barH/2+4).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="600" fill="white">${v.toFixed(0)}%</text>`;
+// LOAD DATA
+function loadData(){
+  setStatus('⏳ Carregando…');
+  setAlrt('⏳ Carregando dados do Firebase…');
+  log('Buscando dados em ' + DB + '/sopro/daily.json');
+  fetch(DB + '/sopro/daily.json')
+    .then(function(r){
+      log('HTTP ' + r.status);
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data){
+      if(!data){
+        setStatus('✓ Conectado', 'ok');
+        setAlrt('✅ Firebase conectado. Vá em Upload e envie seu CSV.', 'ok');
+        log('Firebase vazio (null)');
+        ALL = [];
+        renderCards();
+        return;
       }
-      cumY+=v;
+      ALL = Object.values(data).sort(function(a,b){return a.date.localeCompare(b.date);});
+      setStatus('✓ ' + ALL.length + ' registros', 'ok');
+      setAlrt('✅ ' + ALL.length + ' registros carregados · ' + ALL[0].date + ' → ' + ALL[ALL.length-1].date, 'ok');
+      log('Carregados: ' + ALL.length + ' registros');
+      renderCards();
+      renderTable();
+    })
+    .catch(function(e){
+      setStatus('❌ Erro', 'err');
+      setAlrt('❌ Erro: ' + e.message, 'err');
+      log('ERRO: ' + e.message);
     });
-    const shortLbl=lbl.replace('Trans.Chuva→Seca','T.Chu→Sec').replace('Trans.Seca→Chuva','T.Sec→Chu');
-    xlbls+=`<text x="${cx.toFixed(1)}" y="${(pad.t+L.cH+14).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="#374151">${shortLbl}</text>`;
-  });
-
-  /* Axis */
-  const ax=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>
-  <line x1="${pad.l}" y1="${pad.t+L.cH}" x2="${pad.l+L.cW}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>`;
-
-  /* Legend */
-  let leg='';
-  const lCols=2,lW=Math.floor((W-pad.l-pad.r)/lCols);
-  seriesLabels.forEach((lbl,i)=>{
-    const col=i%lCols, row=Math.floor(i/lCols);
-    const lx=pad.l+col*lW, ly=pad.t+L.cH+32+row*15;
-    leg+=`<rect x="${lx}" y="${ly}" width="11" height="9" fill="${seriesColors[i]}" opacity=".88"/>`;
-    leg+=`<text x="${lx+14}" y="${ly+8}" font-size="9" fill="#374151">${lbl}</text>`;
-  });
-
-  const svgH=H+legH;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${svgH}" style="width:100%;height:${svgH}px;background:#fff">
-    ${grid}${bars}${ax}${yticks}${xlbls}${leg}
-    <text transform="translate(12,${(pad.t+L.cH/2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">%</text>
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
 }
 
-/* ─ SVG Heatmap ─ */
-function svgHeatmap(matrix,xLabels,yLabels,wrapId,svgId,scheme,zmin,zmax){
-  const el=document.getElementById(wrapId);if(!el)return;
-  const W=getW(wrapId),H=getH(wrapId)||250;
-  const pad={l:48,r:90,t:28,b:32};
-  const cW=(W-pad.l-pad.r)/xLabels.length;
-  const cH=(H-pad.t-pad.b)/yLabels.length;
-  if(!zmin&&!zmax){let mn=Infinity,mx=-Infinity;matrix.forEach(r=>r.forEach(v=>{if(v!=null){mn=Math.min(mn,v);mx=Math.max(mx,v);}}));zmin=mn;zmax=mx;}
-
-  let cells='',xlbls='',ylbls='';
-  matrix.forEach((row,ri)=>{
-    ylbls+=`<text x="${pad.l-5}" y="${(pad.t+ri*cH+cH/2+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#374151">${yLabels[ri]}</text>`;
-    row.forEach((v,ci)=>{
-      if(v==null)return;
-      const t=(v-zmin)/(zmax-zmin||1);
-      const x=pad.l+ci*cW, y=pad.t+ri*cH;
-      const col=heatColor(t,scheme);
-      cells+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cW.toFixed(1)}" height="${cH.toFixed(1)}" fill="${col}"/>`;
-      const textCol=Math.abs(t-.5)>.3?'white':'#1c1e22';
-      cells+=`<text x="${(x+cW/2).toFixed(1)}" y="${(y+cH/2+4).toFixed(1)}" text-anchor="middle" font-size="${Math.min(cH*.38,12).toFixed(1)}" font-weight="600" fill="${textCol}">${typeof v==='number'?v.toFixed(1):''}</text>`;
-    });
-  });
-  xLabels.forEach((lbl,ci)=>{
-    xlbls+=`<text x="${(pad.l+ci*cW+cW/2).toFixed(1)}" y="${(pad.t-6).toFixed(1)}" text-anchor="middle" font-size="10" fill="#374151">${lbl}</text>`;
-  });
-
-  /* Colorbar */
-  let cbar='';
-  const cbX=W-pad.r+8, cbW=12, cbH=H-pad.t-pad.b;
-  for(let i=0;i<cbH;i++){
-    const t=1-i/cbH;
-    cbar+=`<line x1="${cbX}" y1="${(pad.t+i).toFixed(1)}" x2="${cbX+cbW}" y2="${(pad.t+i).toFixed(1)}" stroke="${heatColor(t,scheme)}" stroke-width="1.2"/>`;
-  }
-  [0,.25,.5,.75,1].forEach(t=>{
-    const y=pad.t+cbH*(1-t), v=zmin+(zmax-zmin)*t;
-    cbar+=`<text x="${cbX+cbW+3}" y="${(y+4).toFixed(1)}" font-size="9" fill="#6c7280">${v.toFixed(1)}</text>`;
-  });
-
-  /* Border */
-  const border=`<rect x="${pad.l}" y="${pad.t}" width="${(xLabels.length*cW).toFixed(1)}" height="${(yLabels.length*cH).toFixed(1)}" fill="none" stroke="#adb5bd" stroke-width="1"/>`;
-
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;background:#fff">
-    ${cells}${xlbls}${ylbls}${cbar}${border}
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
+function renderCards(){
+  if(!ALL.length) return;
+  var avg = function(k){
+    var a = ALL.filter(function(d){return d[k]!=null;});
+    return a.length ? (a.reduce(function(s,d){return s+parseFloat(d[k]);},0)/a.length).toFixed(1) : '—';
+  };
+  document.getElementById('v-pm').textContent = avg('pm25');
+  document.getElementById('v-co').textContent = parseFloat(avg('co2')).toFixed(0);
+  document.getElementById('v-te').textContent = avg('temp');
+  document.getElementById('v-hu').textContent = avg('humidity');
+  document.getElementById('v-n').textContent = ALL.length;
+  document.getElementById('v-p').textContent = ALL[0].date.slice(0,7) + ' → ' + ALL[ALL.length-1].date.slice(0,7);
 }
 
-/* ─ Scatter ─ */
-function svgScatter(datasets,xLabel,yLabel,wrapId,svgId,extraLines){
-  const el=document.getElementById(wrapId);if(!el)return;
-  const W=getW(wrapId),H=getH(wrapId)||260;
-  const pad={l:52,r:16,t:12,b:44};
-  const L=svgLayout(W,H,pad);
-
-  let allX=[],allY=[];
-  datasets.forEach(ds=>{ds.pts.forEach(p=>{allX.push(p.x);allY.push(p.y);});});
-  if(!allX.length)return;
-  const xlo=Math.min(...allX)*.98, xhi=Math.max(...allX)*1.02;
-  const ylo=0, yhi=Math.max(...allY)*1.08;
-
-  let pts='';
-  datasets.forEach(ds=>{
-    ds.pts.slice(0,150).forEach(p=>{
-      pts+=`<circle cx="${L.toX(p.x,xlo,xhi).toFixed(1)}" cy="${L.toY(p.y,ylo,yhi).toFixed(1)}" r="3.5" fill="${ds.color}" opacity=".65"/>`;
-    });
-  });
-
-  /* Extra lines (e.g. quadrant dividers) */
-  let extras='';
-  (extraLines||[]).forEach(l=>{
-    if(l.type==='vline'){const x=L.toX(l.v,xlo,xhi);extras+=`<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${pad.t+L.cH}" stroke="${l.c||'#95a5a6'}" stroke-width="1.2" stroke-dasharray="4,3"/>`;}
-    if(l.type==='hline'){const y=L.toY(l.v,ylo,yhi);extras+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="${l.c||'#95a5a6'}" stroke-width="1.2" stroke-dasharray="4,3"/>`;}
-  });
-
-  /* Grid */
-  let grid='',xticks='',yticks='';
-  for(let i=0;i<=5;i++){
-    const vy=ylo+(yhi-ylo)*i/5, y=L.toY(vy,ylo,yhi);
-    grid+=`<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${pad.l+L.cW}" y2="${y.toFixed(1)}" stroke="#e8eaed" stroke-width="1"/>`;
-    yticks+=`<text x="${pad.l-6}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#6c7280">${vy.toFixed(0)}</text>`;
-    const vx=xlo+(xhi-xlo)*i/5, x=L.toX(vx,xlo,xhi);
-    grid+=`<line x1="${x.toFixed(1)}" y1="${pad.t}" x2="${x.toFixed(1)}" y2="${pad.t+L.cH}" stroke="#e8eaed" stroke-width="1"/>`;
-    xticks+=`<text x="${x.toFixed(1)}" y="${(pad.t+L.cH+14).toFixed(1)}" text-anchor="middle" font-size="10" fill="#6c7280">${vx.toFixed(0)}</text>`;
-  }
-
-  const ax=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>
-  <line x1="${pad.l}" y1="${pad.t+L.cH}" x2="${pad.l+L.cW}" y2="${pad.t+L.cH}" stroke="#adb5bd" stroke-width="1.3"/>`;
-
-  /* Legend */
-  let leg='';
-  datasets.forEach((ds,i)=>{
-    leg+=`<circle cx="${(pad.l+i*85).toFixed(1)}" cy="${(pad.t+L.cH+28).toFixed(1)}" r="4" fill="${ds.color}" opacity=".8"/>`;
-    leg+=`<text x="${(pad.l+i*85+8).toFixed(1)}" y="${(pad.t+L.cH+32).toFixed(1)}" font-size="9" fill="#374151">${ds.label}</text>`;
-  });
-
-  const svgH=H+28;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${svgH}" style="width:100%;height:${svgH}px;background:#fff">
-    ${grid}${extras}${pts}${ax}${xticks}${yticks}
-    <text transform="translate(13,${(pad.t+L.cH/2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">${yLabel||''}</text>
-    <text x="${(pad.l+L.cW/2).toFixed(1)}" y="${(pad.t+L.cH+26).toFixed(1)}" text-anchor="middle" font-size="11" fill="#374151">${xLabel||''}</text>
-    ${leg}
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
-}
-
-/* ─ Pearson heatmap special ─ */
-function svgCorrMatrix(wrapId,svgId){
-  const vars=['PM₂.₅','CO₂','Temp','Umid'];
-  const mat=[[1,-.01,.10,-.26],[-.01,1,-.07,.13],[.10,-.07,1,-.75],[-.26,.13,-.75,1]];
-  const el=document.getElementById(wrapId);if(!el)return;
-  const W=getW(wrapId),H=getH(wrapId)||240;
-  const n=4;
-  const pad={l:40,r:12,t:36,b:12};
-  const cW=(W-pad.l-pad.r)/n, cH=(H-pad.t-pad.b)/n;
-
-  let cells='';
-  mat.forEach((row,ri)=>{
-    row.forEach((v,ci)=>{
-      const t=(v+1)/2;
-      const x=pad.l+ci*cW, y=pad.t+ri*cH;
-      const col=heatColor(t,'RdBu');
-      cells+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cW.toFixed(1)}" height="${cH.toFixed(1)}" fill="${col}"/>`;
-      const tc=Math.abs(v)>.4?'white':'#1c1e22';
-      cells+=`<text x="${(x+cW/2).toFixed(1)}" y="${(y+cH/2+5).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="700" fill="${tc}">${v.toFixed(2)}</text>`;
-    });
-  });
-
-  let xlbls='',ylbls='';
-  vars.forEach((v,i)=>{
-    xlbls+=`<text x="${(pad.l+i*cW+cW/2).toFixed(1)}" y="${(pad.t-8).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="#374151">${v}</text>`;
-    ylbls+=`<text x="${pad.l-5}" y="${(pad.t+i*cH+cH/2+4).toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" fill="#374151">${v}</text>`;
-  });
-
-  const border=`<rect x="${pad.l}" y="${pad.t}" width="${(n*cW).toFixed(1)}" height="${(n*cH).toFixed(1)}" fill="none" stroke="#adb5bd" stroke-width="1"/>`;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;background:#fff">
-    ${cells}${xlbls}${ylbls}${border}
-  </svg>`;
-  putSVG(wrapId,svgId,svg);
-}
-
-/* ─ Drag-to-select on PM2.5 chart ─ */
-function addDragSelect(svgId,wrapId,pad,L,Ds){
-  const wrap=document.getElementById(wrapId);if(!wrap)return;
-  const getSvg=()=>wrap.querySelector('svg');
-  let drag={active:false,x0:0};
-  wrap.addEventListener('mousedown',e=>{
-    const rect=wrap.getBoundingClientRect();
-    const relX=e.clientX-rect.left;
-    if(relX<pad.l||relX>pad.l+L.cW)return;
-    drag={active:true,x0:relX-pad.l};
-    e.preventDefault();
-  });
-  wrap.addEventListener('mousemove',e=>{
-    if(!drag.active)return;
-    const rect=wrap.getBoundingClientRect();
-    const relX=Math.max(0,Math.min(L.cW,e.clientX-rect.left-pad.l));
-    const svg=getSvg();const sel=svg?.getElementById('sel-'+svgId);
-    if(!sel)return;
-    const x=Math.min(drag.x0,relX), w=Math.abs(relX-drag.x0);
-    sel.setAttribute('x',x);sel.setAttribute('width',w);
-  });
-  wrap.addEventListener('mouseup',e=>{
-    if(!drag.active)return;
-    drag.active=false;
-    const rect=wrap.getBoundingClientRect();
-    const relX=Math.max(0,Math.min(L.cW,e.clientX-rect.left-pad.l));
-    const x0=Math.min(drag.x0,relX), x1=Math.max(drag.x0,relX);
-    if(x1-x0<8)return;
-    /* Convert px to data indices */
-    const i0=Math.floor(x0/L.cW*Ds.length);
-    const i1=Math.ceil(x1/L.cW*Ds.length);
-    const d0=Ds[Math.max(0,i0)]?.date, d1=Ds[Math.min(Ds.length-1,i1)]?.date;
-    if(d0&&d1){
-      document.getElementById('d-from').value=d0;
-      document.getElementById('d-to').value=d1;
-      document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
-      toast('Selecionado: '+d0+' → '+d1,'ok');
-    }
-  });
-  wrap.addEventListener('dblclick',()=>{
-    const svg=getSvg();const sel=svg?.getElementById('sel-'+svgId);
-    if(sel){sel.setAttribute('width','0');}
-  });
-  /* Touch support */
-  let tDrag={active:false,x0:0};
-  wrap.addEventListener('touchstart',e=>{
-    const rect=wrap.getBoundingClientRect();
-    const relX=e.touches[0].clientX-rect.left;
-    if(relX>=pad.l&&relX<=pad.l+L.cW){tDrag={active:true,x0:relX-pad.l};e.preventDefault();}
-  },{passive:false});
-  wrap.addEventListener('touchmove',e=>{
-    if(!tDrag.active)return;
-    const rect=wrap.getBoundingClientRect();
-    const relX=Math.max(0,Math.min(L.cW,e.touches[0].clientX-rect.left-pad.l));
-    const svg=getSvg();const sel=svg?.getElementById('sel-'+svgId);
-    if(!sel)return;
-    const x=Math.min(tDrag.x0,relX), w=Math.abs(relX-tDrag.x0);
-    sel.setAttribute('x',x);sel.setAttribute('width',w);
-    e.preventDefault();
-  },{passive:false});
-  wrap.addEventListener('touchend',e=>{
-    if(!tDrag.active)return;
-    tDrag.active=false;
-    const rect=wrap.getBoundingClientRect();
-    const relX=Math.max(0,Math.min(L.cW,(e.changedTouches[0]?.clientX||0)-rect.left-pad.l));
-    const x0=Math.min(tDrag.x0,relX), x1=Math.max(tDrag.x0,relX);
-    if(x1-x0<8)return;
-    const i0=Math.floor(x0/L.cW*Ds.length), i1=Math.ceil(x1/L.cW*Ds.length);
-    const d0=Ds[Math.max(0,i0)]?.date, d1=Ds[Math.min(Ds.length-1,i1)]?.date;
-    if(d0&&d1){
-      document.getElementById('d-from').value=d0;
-      document.getElementById('d-to').value=d1;
-      document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
-      toast('Selecionado: '+d0+' → '+d1,'ok');
-    }
-  });
-}
-
-/* ════════════════════════════════════════════
-   PAINEL
-════════════════════════════════════════════ */
-function renderPainel(){
-  const D=FIL;if(!D.length){showEmpty();return;}
-  svgTimeSeries(D,'pm25',C.r,[{v:15,c:C.a,label:'PI1=15'},{v:25,c:C.r,label:'PI2=25'}],'wrap-pm25','svg-pm25');
-  svgLine(D,'co2',C.g,'wrap-co2','svg-co2','ppm');
-  svgLine(D,'temp',C.o,'wrap-temp','svg-temp','°C');
-  svgLine(D,'humidity',C.b,'wrap-hum','svg-hum','%');
-
-  /* PM2.5 boxplot by month */
-  const pmBP=MOS.map((_,m)=>bxStats(D.filter(d=>new Date(d.date).getMonth()===m&&d.pm25!=null).map(d=>d.pm25)));
-  svgBoxplot(MOS,pmBP,MC,'wrap-pm-bp','svg-pm-bp','PM₂.₅ (µg/m³)',0,null,[{v:15,c:C.a,dash:'5,3',label:'PI1'},{v:25,c:C.r,dash:'4,3',label:'PI2'}]);
-
-  /* Temp boxplot by month */
-  const teBP=MOS.map((_,m)=>bxStats(D.filter(d=>new Date(d.date).getMonth()===m&&d.temp!=null).map(d=>d.temp)));
-  svgBoxplot(MOS,teBP,MC,'wrap-te-bp','svg-te-bp','Temperatura (°C)');
-
-  /* Correlations */
-  svgCorrMatrix('wrap-corr','svg-corr');
-
-  /* Scatter T × Umidade */
-  svgScatter(SEAS.map(s=>({label:s,color:C.seas[s]||'#888',
-    pts:D.filter(d=>d.season===s&&d.temp&&d.humidity).map(d=>({x:d.temp,y:d.humidity})).slice(0,100)
-  })),'Temperatura (°C)','Umidade (%)','wrap-tu','svg-tu');
-}
-
-/* ════════════════════════════════════════════
-   ANÁLISE
-════════════════════════════════════════════ */
-function renderAnalise(){
-  const D=FIL;if(!D.length){showEmpty();return;}
-
-  /* ITP series */
-  svgTimeSeries(D,'itp',C.b,
-    [{v:1,c:C.a,label:'Alerta'},{v:2,c:C.r,label:'Crítico'}],
-    'wrap-itp-ts','svg-itp-ts');
-
-  /* ITP boxplot by season */
-  const itpBP=SEAS.map(s=>bxStats(D.filter(d=>d.season===s).map(d=>d.itp??itp(d))));
-  svgBoxplot(SEAS,itpBP,SEAS.map(s=>C.seas[s]),'wrap-itp-bp','svg-itp-bp','ITP',null,null,[{v:1,c:C.a,dash:'5,3',label:'Alerta'},{v:2,c:C.r,dash:'4,3',label:'Crítico'}]);
-
-  /* ITP classes stacked */
-  const cls=['ITP<−1','−1–0','0–1','1–2','≥2'];
-  const clsC=[C.b,C.lb,'#82e0aa',C.a,C.r];
-  const clsD=SEAS.map(s=>{
-    const a=D.filter(d=>d.season===s).map(d=>d.itp??itp(d)),t=a.length||1;
-    return[a.filter(v=>v<-1),a.filter(v=>v>=-1&&v<0),a.filter(v=>v>=0&&v<1),a.filter(v=>v>=1&&v<2),a.filter(v=>v>=2)].map(x=>+(x.length/t*100).toFixed(1));
-  });
-  svgStackedBar(SEAS,clsD,cls,clsC,'wrap-itp-st','svg-itp-st');
-
-  /* ITP monthly boxplot */
-  const itpMBP=MOS.map((_,m)=>bxStats(D.filter(d=>new Date(d.date).getMonth()===m).map(d=>d.itp??itp(d))));
-  svgBoxplot(MOS,itpMBP,MC,'wrap-itp-mbp','svg-itp-mbp','ITP',null,null,[{v:1,c:C.a,dash:'5,3',label:'Alerta'},{v:2,c:C.r,dash:'4,3',label:'Crítico'}]);
-
-  /* ITP heatmap */
-  /* ITP heatmap: build from real data by year×month */
-  const years=[...new Set(D.map(d=>d.date.slice(0,4)))].sort();
-  const hZ=years.map(y=>MOS.map((_,m)=>{
-    const a=D.filter(d=>d.date.slice(0,4)===y&&new Date(d.date).getMonth()===m).map(d=>d.itp??calcITP(d));
-    return a.length?+(a.reduce((s,v)=>s+v,0)/a.length).toFixed(2):null;
-  }));
-  if(hZ.length) svgHeatmap(hZ,MOS,years,'wrap-itp-hm','svg-itp-hm','RdBu',-2,3);
-
-  /* Quadrant scatter */
-  svgScatter(SEAS.map(s=>({label:s,color:C.seas[s],
-    pts:D.filter(d=>d.season===s&&d.temp&&d.pm25).map(d=>({x:d.temp,y:d.pm25})).slice(0,100)
-  })),'Temperatura (°C)','PM₂.₅ (µg/m³)','wrap-quad','svg-quad',
-    [{type:'vline',v:33,c:C.gr},{type:'hline',v:12,c:C.gr}]);
-
-  /* Quadrant stacked bar */
-  const TM=33,PMT=12;
-  const qD=SEAS.map(s=>{
-    const a=D.filter(d=>d.season===s&&d.temp&&d.pm25),t=a.length||1;
-    return[+(a.filter(d=>d.temp>=TM&&d.pm25>=PMT).length/t*100).toFixed(1),
-           +(a.filter(d=>d.temp>=TM&&d.pm25<PMT).length/t*100).toFixed(1),
-           +(a.filter(d=>d.temp<TM&&d.pm25>=PMT).length/t*100).toFixed(1),
-           +(a.filter(d=>d.temp<TM&&d.pm25<PMT).length/t*100).toFixed(1)];
-  });
-  svgStackedBar(SEAS,qD,['Q1 Quente+Poluído','Q2 Quente+Limpo','Q3 Frio+Poluído','Q4 Frio+Limpo'],[C.r,C.o,C.p,C.b],'wrap-q-bar','svg-q-bar');
-}
-
-/* ════════════════════════════════════════════
-   ONDAS DE CALOR
-════════════════════════════════════════════ */
-function renderOndas(){
-  const D=FIL;if(!D.length){showEmpty();return;}
-  const ref=D.map(d=>CLIM[new Date(d.date).getMonth()]);
-  const anom=D.map((d,i)=>d.temp!=null?+(d.temp-ref[i]).toFixed(2):null);
-  const Danom=D.map((d,i)=>({...d,anom:anom[i]}));
-
-  /* Temp vs climatology — special chart */
-  svgLine(D,'temp',C.r,'wrap-hw-t','svg-hw-t','°C',[{v:Math.max(...ref.map((r,i)=>r+(anom[i]||0)+0))+0,c:'transparent',label:''}]);
-  /* Anomaly bars */
-  svgTimeSeries(Danom,'anom','#e67e22',
-    [{v:3,c:C.o,label:'+3°C'},{v:5,c:C.r,label:'+5°C'}],
-    'wrap-hw-an','svg-hw-an');
-  /* PM + Humidity */
-  svgLine(D,'pm25','#6e2c00','wrap-hw-pu','svg-hw-pu','PM₂.₅ (µg/m³) / UR (%)');
-
-  /* IC boxplot by month */
-  const icBP=MOS.map((_,m)=>bxStats(D.filter(d=>new Date(d.date).getMonth()===m).map(ic).filter(v=>v!=null)));
-  svgBoxplot(MOS,icBP,MC,'wrap-ic-bp','svg-ic-bp','Índice de Calor (°C)',14,52,[
-    {v:27,c:C.a,dash:'5,3',label:'Cautela'},
-    {v:32,c:C.o,dash:'5,3',label:'Ext.Caut.'},
-    {v:41,c:C.r,dash:'4,3',label:'Perigo'}]);
-
-  /* IC risk stacked */
-  const icR=SEAS.map(s=>{
-    const a=D.filter(d=>d.season===s).map(ic).filter(v=>v!=null),t=a.length||1;
-    return[+(a.filter(v=>v<27).length/t*100).toFixed(1),
-           +(a.filter(v=>v>=27&&v<32).length/t*100).toFixed(1),
-           +(a.filter(v=>v>=32&&v<41).length/t*100).toFixed(1),
-           +(a.filter(v=>v>=41).length/t*100).toFixed(1)];
-  });
-  svgStackedBar(SEAS,icR,['Confortável (<27°C)','Cautela (27–32°C)','Ext. Cautela (32–41°C)','Perigo (>41°C)'],[C.b,C.a,C.o,C.r],'wrap-ic-st','svg-ic-st');
-
-  /* IC heatmap hora × mês */
-  const icGrid=MOS.map((_,m)=>Array.from({length:24},(_,h)=>{
-    const base=CLIM[m],hFac=h>6&&h<20?Math.sin((h-6)*Math.PI/14)*9.5:0;
-    const rFac=m===6?-7:m===7?-4.5:m===4?-2:0;
-    return +(base+hFac+rFac+.5).toFixed(1);
-  }));
-  const hrs=Array.from({length:24},(_,h)=>`${String(h).padStart(2,'0')}h`);
-  svgHeatmap(icGrid,hrs,MOS,'wrap-ic-hm','svg-ic-hm','heat',17,42);
-}
-
-/* ════════════════════════════════════════════
-   TABLE
-════════════════════════════════════════════ */
 function renderTable(){
-  const tbody=document.getElementById('tb-body');if(!tbody)return;
-  const cnt=document.getElementById('tb-count');
-  if(cnt)cnt.textContent=ALL.length+' registros';
-  if(!ALL.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:1rem;color:#9ca3af;font-style:italic">Nenhum dado. Faça upload do CSV.</td></tr>';return;}
-  const r=[...ALL].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,50);
-  tbody.innerHTML=r.map(d=>{
-    const p=d.pm25?.toFixed(1)||'—';
-    const icv=d.ic?.toFixed(1)||'—';
-    const rsk=d.pm25>60?'<span class="rsk rx">Péssima</span>':d.pm25>25?'<span class="rsk rh">Alta</span>':d.pm25>10?'<span class="rsk rm">Mod.</span>':'<span class="rsk rok">Boa</span>';
-    const del='<button onclick="deleteRow(''+d.date+'')" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:2px 7px;border-radius:4px;cursor:pointer;font-size:10px;font-family:inherit">✕</button>';
-    return'<tr><td>'+d.date+'</td><td>'+p+'</td><td>'+(d.co2?.toFixed(0)||'—')+'</td><td>'+(d.temp?.toFixed(1)||'—')+'</td><td>'+(d.humidity?.toFixed(0)||'—')+'</td><td>'+(d.season||'—')+'</td><td>'+icv+'</td><td>'+rsk+'</td><td>'+del+'</td></tr>';
+  var tbody = document.getElementById('tbody');
+  if(!tbody) return;
+  var r = ALL.slice().reverse().slice(0,30);
+  tbody.innerHTML = r.map(function(d){
+    return '<tr><td>'+d.date+'</td><td>'+(parseFloat(d.pm25).toFixed(1)||'—')+'</td><td>'+(d.co2||'—')+'</td><td>'+(parseFloat(d.temp).toFixed(1)||'—')+'</td><td>'+(d.humidity||'—')+'</td><td>'+(d.season||'—')+'</td></tr>';
   }).join('');
 }
-function deleteRow(date){
-  if(!confirm('Apagar registro de '+date+'?'))return;
-  const key=date.replace(/-/g,'');
-  if(window._fb){
-    const fb=window._fb;
-    fetch(DB_URL+'/sopro/daily/'+key+'.json',{method:'DELETE'})
-      .then(function(){toast('Registro '+date+' apagado','ok');loadFB();})
-      .catch(function(e){toast('Erro: '+e.message,'e');});
-  }else{
-    ALL=ALL.filter(function(d){return d.date!==date;});
-    FIL=[...ALL];renderTable();renderAll();updateCards();
-    toast('Registro '+date+' removido','w');
-  }
-}
-/* ════════════════════════════════════════════
-   DOWNLOADS
-════════════════════════════════════════════ */
-function dlSVG(svgId,fname){
-  /* Convert SVG to PNG via canvas */
-  const svgEl=document.getElementById(svgId);
-  if(!svgEl){toast('Gráfico não encontrado: '+svgId,'e');return;}
-  const svgStr=new XMLSerializer().serializeToString(svgEl);
-  const W=svgEl.viewBox?.baseVal?.width||svgEl.offsetWidth||600;
-  const H=svgEl.viewBox?.baseVal?.height||svgEl.offsetHeight||400;
-  const canvas=document.createElement('canvas');
-  canvas.width=W*2;canvas.height=H*2;
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  const img=new Image();
-  const blob=new Blob([svgStr],{type:'image/svg+xml'});
-  const url=URL.createObjectURL(blob);
-  img.onload=()=>{
-    ctx.scale(2,2);ctx.drawImage(img,0,0,W,H);
-    const pngUrl=canvas.toDataURL('image/png',1.0);
-    const a=document.createElement('a');
-    a.href=pngUrl;a.download='SOPRO_'+fname+'.png';
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},300);
-    toast('PNG salvo: '+fname,'ok');
-  };
-  img.onerror=()=>{
-    /* fallback: download SVG */
-    const a=document.createElement('a');
-    a.href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);
-    a.download='SOPRO_'+fname+'.svg';
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>document.body.removeChild(a),300);
-    toast('SVG salvo: '+fname,'w');
-  };
-  img.src=url;
-}
 
-function dlCSV(key,label){
-  const D=FIL;if(!D.length){toast('Nenhum dado','w');return;}
-  const f=document.getElementById('d-from').value||D[0].date;
-  const t=document.getElementById('d-to').value||D[D.length-1].date;
-  const rows=['data,'+key,...D.map(d=>`${d.date},${d[key]??''}`)].join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows);
-  a.download='SOPRO_'+label+'_'+f+'_'+t+'.csv';
-  document.body.appendChild(a);a.click();
-  setTimeout(()=>document.body.removeChild(a),300);
-  toast('CSV: '+D.length+' linhas ('+f+'→'+t+')','ok');
-}
-function dlCSVall(){
-  const D=FIL;if(!D.length){toast('Nenhum dado','w');return;}
-  const f=document.getElementById('d-from').value||D[0].date;
-  const t=document.getElementById('d-to').value||D[D.length-1].date;
-  const keys=['date','pm25','co2','temp','humidity','temp_max','temp_min','season','itp','ic'];
-  const rows=[keys.join(','),...D.map(d=>keys.map(k=>d[k]??'').join(','))].join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows);
-  a.download='SOPRO_completo_'+f+'_'+t+'.csv';
-  document.body.appendChild(a);a.click();
-  setTimeout(()=>document.body.removeChild(a),300);
-  toast('CSV completo: '+D.length+' registros','ok');
-}
-function clearData(){
-  if(!confirm('Limpar TODOS os dados do Firebase? Esta ação não pode ser desfeita.'))return;
-  if(window._fb){
-    window._fb.set(window._fb.ref(window._fb.db,'sopro/daily'),null)
-      .then(()=>{
-        ALL=genDemo();FIL=[...ALL];
-        setDot('demo','● Modo Demo');
-        renderAll();updateCards();renderTable();
-        toast('Dados apagados do Firebase. Modo demo ativado.','w');
-      })
-      .catch(e=>toast('Erro ao apagar: '+e.message,'e'));
-  }else{
-    ALL=genDemo();FIL=[...ALL];
-    setDot('demo','● Modo Demo');
-    renderAll();updateCards();renderTable();
-    toast('Modo demo ativado.','w');
-  }
-}
-function dlTpl(){
-  const s=['date,pm25,co2,temp,humidity,temp_max,temp_min,season',
-    '2024-09-01,45.2,462,33.1,58,40.5,25.3,Seca',
-    '2024-01-15,6.3,448,31.5,82,38.2,25.1,Chuvosa'].join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(s);
-  a.download='sopro_modelo.csv';
-  document.body.appendChild(a);a.click();
-  setTimeout(()=>document.body.removeChild(a),300);
-  toast('Modelo baixado','ok');
-}
-
-/* ════════════════════════════════════════════
-   UPLOAD
-════════════════════════════════════════════ */
-function doDrop(e){e.preventDefault();doFile(e.dataTransfer.files[0]);}
+// UPLOAD
 function doFile(file){
-  if(!file)return;
-  toast('Processando '+file.name+'…','ok');
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete:async res=>{
-    const sm=m=>[11,0,1,2].includes(m)?'Chuvosa':[3,4].includes(m)?'Trans.Chuva→Seca':[5,6,7,8].includes(m)?'Seca':'Trans.Seca→Chuva';
-    let ok=0,sk=0;const batch={};
-    for(const row of res.data){
+  if(!file) return;
+  log('Processando: ' + file.name);
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var text = e.target.result;
+    var lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+    var headers = lines[0].split(',').map(function(h){return h.trim().replace(/^["']|["']$/g,'');});
+    log('Colunas: ' + headers.join(', '));
+    var batch = {};
+    var ok = 0, sk = 0;
+    for(var i=1;i<lines.length;i++){
+      var cols = lines[i].split(',');
+      if(!cols[0] || !cols[0].trim()) {sk++;continue;}
+      var row = {};
+      headers.forEach(function(h,j){row[h]=(cols[j]||'').trim().replace(/^["']|["']$/g,'');});
       if(!row.date){sk++;continue;}
-      const d={
-        date:row.date.trim(),
-        pm25:parseFloat(row.pm25)||null,
-        co2:parseFloat(row.co2)||null,
-        temp:parseFloat(row.temp)||null,
-        humidity:parseFloat(row.humidity)||null,
-        temp_max:parseFloat(row.temp_max)||null,
-        temp_min:parseFloat(row.temp_min)||null,
-        season:row.season?.trim()||sm(new Date(row.date).getMonth())
-      };
-      d.itp=itp(d);d.ic=ic(d);
-      batch[d.date.replace(/-/g,'')]=d;
+      var m = parseInt(row.date.slice(5,7));
+      if(!row.season) row.season = [12,1,2,3].includes(m)?'Chuvosa':[4,5].includes(m)?'Trans.Chuva->Seca':[6,7,8,9].includes(m)?'Seca':'Trans.Seca->Chuva';
+      row.pm25 = parseFloat(row.pm25)||null;
+      row.co2 = parseFloat(row.co2)||null;
+      row.temp = parseFloat(row.temp)||null;
+      row.humidity = parseFloat(row.humidity)||null;
+      batch[row.date.replace(/-/g,'')] = row;
       ok++;
     }
-    if(!ok){toast('Nenhum registro válido no CSV','e');return;}
-    toast('✓ '+ok+' registros processados. Salvando…','ok');
-    /* Se Firebase ainda não conectou, aguarda até 10s */
-    let tentativas=0;
-    while(!window._fb && tentativas<20){
-      await new Promise(r=>setTimeout(r,500));
-      tentativas++;
-    }
-    if(window._fb){
-      fetch(DB_URL+'/sopro/daily.json',{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(batch)
-      })
-      .then(function(r){
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        toast('✓ '+ok+' registros salvos no Firebase!','ok');
-        if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
-        loadFB();
-      })
-      .catch(function(e){
-        toast('Erro ao salvar: '+e.message,'e');
-        salvaLocal(batch,ok,sk);
-      });
-    }else{
-      salvaLocal(batch,ok,sk);
-    }
-  },error:e=>toast('Erro CSV: '+e.message,'e')});
-}
-function salvaLocal(batch,ok,sk){
-  ALL=Object.values(batch).sort((a,b)=>a.date.localeCompare(b.date));
-  FIL=[...ALL];renderAll();updateCards();
-  toast('Dados carregados localmente (Firebase indisponível)','w');
-  if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
+    log('Processados: ' + ok + ' | Ignorados: ' + sk);
+    log('Salvando no Firebase…');
+    setAlrt('⏳ Salvando ' + ok + ' registros…');
+    fetch(DB + '/sopro/daily.json', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(batch)
+    })
+    .then(function(r){
+      log('HTTP ' + r.status);
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(){
+      log('✅ Salvo com sucesso!');
+      setAlrt('✅ ' + ok + ' registros salvos no Firebase!', 'ok');
+      loadData();
+    })
+    .catch(function(e){
+      log('❌ ERRO ao salvar: ' + e.message);
+      setAlrt('❌ Erro ao salvar: ' + e.message, 'err');
+    });
+  };
+  reader.readAsText(file);
 }
 
-/* ════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════ */
-function toast(msg,type='ok'){
-  const z=document.getElementById('tz');
-  const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;
-  z.appendChild(t);setTimeout(()=>t.remove(),4500);
+function limpar(){
+  if(!confirm('Apagar TODOS os dados? Não pode desfazer.')) return;
+  fetch(DB + '/sopro/daily.json', {method:'DELETE'})
+    .then(function(){
+      ALL=[];renderCards();renderTable();
+      setAlrt('🗑 Dados apagados. Faça upload de um novo CSV.');
+      log('Dados apagados.');
+    })
+    .catch(function(e){log('Erro ao apagar: '+e.message);});
 }
 
-/* ════════════════════════════════════════════
-   INIT
-════════════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('d-to').value=new Date().toISOString().slice(0,10);
-  /* Mostrar tela vazia imediatamente */
-  boot();
-  /* Conectar Firebase — tem retry automático */
-  connectFB();
-  let resizeT;
-  window.addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(renderAll,250);});
+function dlModelo(){
+  var csv = 'date,pm25,co2,temp,humidity,temp_max,temp_min,season\n2024-09-14,45.2,462,33.1,58,40.5,25.3,Seca\n2024-01-15,6.3,448,31.5,82,38.2,25.1,Chuvosa\n';
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'sopro_modelo.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// INIT
+window.addEventListener('DOMContentLoaded', function(){
+  log('Iniciando SOPRO...');
+  loadData();
 });
 </script>
 </body>
