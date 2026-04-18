@@ -4,14 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SOPRO · Qualidade do Ar · Cáceres-MT</title>
+
+<!-- Firebase — igual ao BRASA -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, remove, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBWcGAa3CWurSiDs5udEtESGwCGGnYTX5Y",
+  authDomain: "brasa-pantanal.firebaseapp.com",
+  databaseURL: "https://brasa-pantanal-default-rtdb.firebaseio.com",
+  projectId: "brasa-pantanal",
+  storageBucket: "brasa-pantanal.firebasestorage.app",
+  messagingSenderId: "876718329822",
+  appId: "1:876718329822:web:e0e0254ee909a933dad74f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window._db = db;
+window._ref = ref;
+window._set = set;
+window._get = get;
+window._onValue = onValue;
+window._remove = remove;
+window._child = child;
+window._fbReady = true;
+document.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1d23}
-
-/* NAV */
 .top{background:#12181f;padding:.65rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:2px solid #1d5fa8}
 .top h1{color:#fff;font-size:.95rem;font-weight:700}
-#fb-status{font-size:10px;padding:3px 9px;border-radius:20px;background:#2a3444;color:#8b9ab3;border:1px solid #3d4a5c;white-space:nowrap}
+#fb-status{font-size:10px;padding:3px 9px;border-radius:20px;background:#2a3444;color:#8b9ab3;border:1px solid #3d4a5c}
 #fb-status.ok{background:#166534;color:#fff;border-color:#27ae60}
 #fb-status.err{background:#9f1239;color:#fff}
 .nav{background:#1a2332;display:flex;border-bottom:2px solid #263245;overflow-x:auto;position:sticky;top:46px;z-index:199}
@@ -22,12 +49,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a
 .alrt.y{background:#fffbeb;border-bottom:2px solid #f39c12;color:#854d0e}
 .alrt.ok{background:#f0fff4;border-bottom:2px solid #27ae60;color:#166534}
 .alrt.r{background:#fff1f2;border-bottom:2px solid #c0392b;color:#9f1239}
-
-/* PAGES */
 .pg{display:none;max-width:1200px;margin:0 auto;padding:.8rem .8rem 2rem}
 .pg.on{display:block}
-
-/* HERO */
 .hero{background:linear-gradient(150deg,#111827,#1d3557,#111827);padding:1.2rem .8rem 1rem;margin-bottom:.5rem}
 .hero h2{font-size:1.5rem;font-weight:800;color:#e8eef5;letter-spacing:-1px}
 .hero h2 b{color:#5fa8e8}
@@ -35,16 +58,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a
 .hst{display:flex;gap:1rem;margin-top:.8rem;flex-wrap:wrap}
 .hv{color:#5fa8e8;font-weight:800;font-size:1.3rem;font-family:monospace}
 .hl{font-size:9px;color:#5a6478;letter-spacing:.4px}
-
-/* CARDS */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:.8rem}
 @media(min-width:600px){.cards{grid-template-columns:repeat(6,1fr)}}
 .card{background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:.7rem .8rem;border-top:3px solid #1d5fa8;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .card-l{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#6c7280;font-weight:600}
 .card-v{font-size:1.35rem;font-weight:800;font-family:monospace;margin:3px 0 1px;line-height:1.1}
 .card-u{font-size:9px;color:#9ca3af}
-
-/* FILTER */
 .fbar{background:#fff;border:2px solid #1d5fa8;border-radius:8px;padding:.65rem .9rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin:.7rem 0;box-shadow:0 0 0 3px rgba(29,95,168,.07)}
 .fbar label{font-size:9.5px;font-weight:700;color:#1d5fa8;text-transform:uppercase}
 .fbar input[type=date]{border:1.5px solid #1d5fa8;border-radius:5px;padding:4px 7px;font-size:11px;font-family:monospace;background:#f0f7ff;color:#1a1d23}
@@ -53,14 +72,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a
 .qb:hover,.qb.on{background:#1d5fa8;color:#fff}
 .abtn{background:#1d5fa8;border:none;color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit}
 .gbtn{background:#166534;border:none;color:#fff;padding:5px 11px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;margin-left:auto}
-
-/* SECTIONS */
 .sh{margin:1rem 0 .3rem;display:flex;align-items:center;gap:8px}
 .sh h3{font-size:.9rem;font-weight:700;white-space:nowrap}
 .sh hr{flex:1;border:none;border-top:1px solid #e1e4e8}
 .desc{font-size:11px;color:#6c7280;line-height:1.7;margin-bottom:.7rem;border-left:3px solid #1d5fa8;background:#f8faff;padding:.5rem .8rem;border-radius:0 6px 6px 0}
-
-/* CHART CARDS */
 .cc{background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:.9rem .8rem .7rem;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .cc-h{display:flex;align-items:center;justify-content:space-between;padding-bottom:.5rem;border-bottom:1px solid #f0f1f3;margin-bottom:.7rem;gap:.5rem}
 .cc-t{font-size:.82rem;font-weight:700}
@@ -72,22 +87,16 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a
 .act.g:hover{background:#166534;color:#fff}
 .cw{width:100%;overflow:hidden}
 .cw svg{display:block;width:100%}
-
-/* GRIDS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:780px){.g2,.g3{grid-template-columns:1fr}}
-
-/* UPLOAD */
-.upz{border:2px dashed #1d5fa8;border-radius:8px;padding:1.8rem;text-align:center;cursor:pointer;background:#fff;position:relative;margin-bottom:.8rem;transition:.15s}
+.upz{border:2px dashed #1d5fa8;border-radius:8px;padding:1.8rem;text-align:center;cursor:pointer;background:#fff;position:relative;margin-bottom:.8rem}
 .upz:hover{background:#f0f7ff}
 .upz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .btn{display:inline-flex;align-items:center;gap:4px;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;margin:.25rem}
 .btn.blue{background:#1d5fa8;color:#fff}
 .btn.green{background:#166534;color:#fff}
 .btn.red{background:#9f1239;color:#fff}
-
-/* TABLE */
 .tw{overflow-x:auto;border-radius:7px;border:1px solid #e1e4e8;margin-top:.5rem}
 table{width:100%;border-collapse:collapse;font-size:10.5px;font-family:monospace}
 th{background:#f6f8fa;padding:5px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#6c7280;font-weight:700;border-bottom:1px solid #e1e4e8}
@@ -97,15 +106,12 @@ tr:hover td{background:#f9fafb}
 .rsk{display:inline-flex;padding:1px 5px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase}
 .rok{background:#dcfce7;color:#166534}.rm{background:#fef9c3;color:#7d4e00}
 .rh{background:#fee2e2;color:#9f1239}.rx{background:#7c3aed;color:#fff}
-
-/* TOAST */
 .tz{position:fixed;bottom:.8rem;right:.8rem;display:flex;flex-direction:column;gap:4px;z-index:999}
-.toast{background:#1c1e22;color:#e8eef5;padding:7px 11px;border-radius:6px;font-size:11px;font-family:monospace;max-width:280px;animation:tu .25s ease;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast{background:#1c1e22;color:#e8eef5;padding:7px 11px;border-radius:6px;font-size:11px;font-family:monospace;max-width:280px;animation:tu .25s ease}
 .toast.ok{border-left:3px solid #27ae60}
 .toast.w{border-left:3px solid #f39c12}
 .toast.e{border-left:3px solid #c0392b}
 @keyframes tu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-
 footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;margin-top:1.5rem}
 .ft{color:#3d4e62;font-size:9px;font-family:monospace}
 </style>
@@ -114,7 +120,7 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
 
 <div class="top">
   <h1>🌬 SOPRO · Qualidade do Ar · Cáceres-MT · UNEMAT</h1>
-  <span id="fb-status">⏳ Conectando…</span>
+  <span id="fb-status">⏳ Aguardando Firebase…</span>
 </div>
 <nav class="nav">
   <button class="on" onclick="go('painel',this)">Painel</button>
@@ -123,7 +129,7 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
   <button onclick="go('upload',this)">Upload</button>
   <button onclick="go('sobre',this)">Sobre</button>
 </nav>
-<div class="alrt y" id="alrt">⏳ Conectando ao Firebase…</div>
+<div class="alrt y" id="alrt">⏳ Aguardando conexão com Firebase…</div>
 
 <!-- PAINEL -->
 <div class="pg on" id="pg-painel">
@@ -137,7 +143,6 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
       <div><div class="hv" id="h-pr">—</div><div class="hl">Período</div></div>
     </div>
   </div>
-
   <div class="cards">
     <div class="card" style="border-top-color:#c0392b"><div class="card-l">PM₂.₅</div><div class="card-v" id="c-pm" style="color:#c0392b">—</div><div class="card-u">µg/m³ · média</div></div>
     <div class="card" style="border-top-color:#27ae60"><div class="card-l">CO₂</div><div class="card-v" id="c-co" style="color:#27ae60">—</div><div class="card-u">ppm</div></div>
@@ -146,7 +151,6 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
     <div class="card" style="border-top-color:#8e44ad"><div class="card-l">ITP</div><div class="card-v" id="c-it" style="color:#8e44ad">—</div><div class="card-u">Termopoliuidor</div></div>
     <div class="card" style="border-top-color:#e8a020"><div class="card-l">Estação</div><div class="card-v" id="c-se" style="font-size:.85rem;margin-top:7px;color:#e8a020">—</div><div class="card-u" id="c-su"></div></div>
   </div>
-
   <div class="fbar">
     <label>De</label><input type="date" id="d-from">
     <label>até</label><input type="date" id="d-to">
@@ -159,22 +163,16 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
     <button class="abtn" onclick="applyF()">▶ Aplicar</button>
     <button class="gbtn" onclick="dlCSVall()">⬇ CSV período</button>
   </div>
-
   <div class="sh"><h3>PM₂.₅ — Série Temporal</h3><hr></div>
-  <div class="desc"><strong>PM₂.₅:</strong> partículas &lt;2,5µm. CONAMA 491/2022: PI1=15µg/m³ (laranja) · PI2=25µg/m³ (vermelho).</div>
-  <div class="cc">
-    <div class="cc-h"><div><div class="cc-t">Concentração Diária de PM₂.₅ (µg/m³)</div><div class="cc-s">Estação UNEMAT · Cáceres-MT</div></div><div class="acts"><button class="act g" onclick="dlCSVk('pm25','PM2.5')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-pm25','PM2.5_serie')">⬇ PNG</button></div></div>
-    <div class="cw" id="cw-pm25" style="height:240px"></div>
-  </div>
-
+  <div class="desc"><strong>PM₂.₅:</strong> partículas &lt;2,5µm. CONAMA 491/2022: PI1=15µg/m³ (laranja) · PI2=25µg/m³ (vermelho). Arraste sobre o gráfico para selecionar período.</div>
+  <div class="cc"><div class="cc-h"><div><div class="cc-t">Concentração Diária de PM₂.₅ (µg/m³)</div><div class="cc-s">Estação UNEMAT · Cáceres-MT</div></div><div class="acts"><button class="act g" onclick="dlCSVk('pm25','PM2.5')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-pm25','PM2.5_serie')">⬇ PNG</button></div></div><div class="cw" id="cw-pm25" style="height:240px"></div></div>
   <div class="sh"><h3>Variáveis Atmosféricas</h3><hr></div>
   <div class="g3">
     <div class="cc"><div class="cc-h"><div class="cc-t">CO₂ (ppm)</div><div class="acts"><button class="act g" onclick="dlCSVk('co2','CO2')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-co2','CO2')">⬇ PNG</button></div></div><div class="cw" id="cw-co2" style="height:180px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">Temperatura (°C)</div><div class="acts"><button class="act g" onclick="dlCSVk('temp','Temp')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-temp','Temp')">⬇ PNG</button></div></div><div class="cw" id="cw-temp" style="height:180px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">Umidade (%)</div><div class="acts"><button class="act g" onclick="dlCSVk('humidity','Umidade')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-hum','Umidade')">⬇ PNG</button></div></div><div class="cw" id="cw-hum" style="height:180px"></div></div>
   </div>
-
-  <div class="sh"><h3>Sazonalidade — Boxplots</h3><hr></div>
+  <div class="sh"><h3>Sazonalidade — Boxplots Reais</h3><hr></div>
   <div class="desc">Linha grossa = mediana · Caixa = IQR (Q1–Q3) · Bigodes = 1,5×IQR · Círculo = média.</div>
   <div class="g2">
     <div class="cc"><div class="cc-h"><div class="cc-t">PM₂.₅ por Mês — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-pm-bp','PM2.5_boxplot')">⬇ PNG</button></div></div><div class="cw" id="cw-pm-bp" style="height:260px"></div></div>
@@ -185,8 +183,8 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
 <!-- ANÁLISE -->
 <div class="pg" id="pg-analise">
   <div class="sh" style="margin-top:.5rem"><h3>Índice Termopoliuidor (ITP)</h3><hr></div>
-  <div class="desc"><strong>ITP = (Z_Temp + Z_PM₂.₅) / √2.</strong> ITP≥1 = Alerta · ITP≥2 = Crítico. Dias quentes E poluídos = máximo risco à saúde.</div>
-  <div class="cc"><div class="cc-h"><div><div class="cc-t">Série Temporal ITP</div><div class="cc-s">Azul=baixo · verde=neutro · laranja=alerta · vermelho=crítico</div></div><div class="acts"><button class="act g" onclick="dlCSVk('itp','ITP')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-itp-ts','ITP_serie')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-ts" style="height:220px"></div></div>
+  <div class="desc"><strong>ITP = (Z_Temp + Z_PM₂.₅) / √2.</strong> ITP≥1 = Alerta · ITP≥2 = Crítico.</div>
+  <div class="cc"><div class="cc-h"><div><div class="cc-t">Série Temporal ITP</div></div><div class="acts"><button class="act g" onclick="dlCSVk('itp','ITP')">⬇ CSV</button><button class="act" onclick="dlPNG('cw-itp-ts','ITP_serie')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-ts" style="height:220px"></div></div>
   <div class="g2">
     <div class="cc"><div class="cc-h"><div class="cc-t">ITP por Estação — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-itp-bp','ITP_boxplot')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-bp" style="height:250px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">Classes ITP por Estação (%)</div><div class="acts"><button class="act" onclick="dlPNG('cw-itp-st','ITP_classes')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-st" style="height:250px"></div></div>
@@ -195,20 +193,19 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
     <div class="cc"><div class="cc-h"><div class="cc-t">ITP Mensal — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-itp-mbp','ITP_mensal')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-mbp" style="height:240px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">ITP Heatmap Ano × Mês</div><div class="acts"><button class="act" onclick="dlPNG('cw-itp-hm','ITP_heatmap')">⬇ PNG</button></div></div><div class="cw" id="cw-itp-hm" style="height:240px"></div></div>
   </div>
-  <div class="sh"><h3>Dispersão T × PM₂.₅</h3><hr></div>
+  <div class="sh"><h3>Quadrantes T × PM₂.₅</h3><hr></div>
   <div class="g2">
-    <div class="cc"><div class="cc-h"><div class="cc-t">Quadrantes por Estação</div><div class="acts"><button class="act" onclick="dlPNG('cw-quad','Quadrantes')">⬇ PNG</button></div></div><div class="cw" id="cw-quad" style="height:240px"></div></div>
+    <div class="cc"><div class="cc-h"><div class="cc-t">Dispersão por Estação</div><div class="acts"><button class="act" onclick="dlPNG('cw-quad','Quadrantes')">⬇ PNG</button></div></div><div class="cw" id="cw-quad" style="height:240px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">Regime por Estação (%)</div><div class="acts"><button class="act" onclick="dlPNG('cw-qbar','Regime')">⬇ PNG</button></div></div><div class="cw" id="cw-qbar" style="height:240px"></div></div>
   </div>
 </div>
 
 <!-- ONDAS -->
 <div class="pg" id="pg-ondas">
-  <div class="sh" style="margin-top:.5rem"><h3>Ondas de Calor e Anomalias</h3><hr></div>
-  <div class="desc"><strong>Onda de calor:</strong> T ≥+3°C acima da climatologia mensal por ≥5 dias. IC = Índice de Calor (temperatura sensação).</div>
-  <div class="cc"><div class="cc-h"><div><div class="cc-t">Temperatura vs. Climatologia</div></div><div class="acts"><button class="act" onclick="dlPNG('cw-hw-t','Temp_climatologia')">⬇ PNG</button></div></div><div class="cw" id="cw-hw-t" style="height:220px"></div></div>
-  <div class="cc"><div class="cc-h"><div><div class="cc-t">Anomalia Térmica Diária (°C)</div></div><div class="acts"><button class="act" onclick="dlPNG('cw-hw-an','Anomalia')">⬇ PNG</button></div></div><div class="cw" id="cw-hw-an" style="height:190px"></div></div>
-  <div class="sh"><h3>Índice de Calor (IC)</h3><hr></div>
+  <div class="sh" style="margin-top:.5rem"><h3>Ondas de Calor</h3><hr></div>
+  <div class="desc">Anomalia térmica diária. Índice de Calor (IC) = sensação térmica real.</div>
+  <div class="cc"><div class="cc-h"><div class="cc-t">Temperatura vs. Climatologia</div><div class="acts"><button class="act" onclick="dlPNG('cw-hw-t','Temp_climatologia')">⬇ PNG</button></div></div><div class="cw" id="cw-hw-t" style="height:220px"></div></div>
+  <div class="cc"><div class="cc-h"><div class="cc-t">Anomalia Térmica Diária (°C)</div><div class="acts"><button class="act" onclick="dlPNG('cw-hw-an','Anomalia')">⬇ PNG</button></div></div><div class="cw" id="cw-hw-an" style="height:190px"></div></div>
   <div class="g2">
     <div class="cc"><div class="cc-h"><div class="cc-t">IC Mensal — Boxplot</div><div class="acts"><button class="act" onclick="dlPNG('cw-ic-bp','IC_boxplot')">⬇ PNG</button></div></div><div class="cw" id="cw-ic-bp" style="height:260px"></div></div>
     <div class="cc"><div class="cc-h"><div class="cc-t">Risco Térmico por Estação (%)</div><div class="acts"><button class="act" onclick="dlPNG('cw-ic-st','IC_risco')">⬇ PNG</button></div></div><div class="cw" id="cw-ic-st" style="height:260px"></div></div>
@@ -219,30 +216,25 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
 <div class="pg" id="pg-upload">
   <div style="max-width:700px;margin:0 auto">
     <div class="sh"><h3>Upload de Dados</h3><hr></div>
-    <div class="desc"><strong>Colunas obrigatórias:</strong> date (AAAA-MM-DD) · pm25 · co2 · temp · humidity. <strong>Opcionais:</strong> temp_max · temp_min · season.</div>
-
+    <div class="desc"><strong>Colunas:</strong> date (AAAA-MM-DD) · pm25 · co2 · temp · humidity · temp_max · temp_min · season</div>
     <div id="up-status" style="background:#f0f7ff;border:1.5px solid #1d5fa8;border-radius:7px;padding:.6rem .9rem;margin-bottom:.7rem;font-size:12px;color:#1e40af;display:flex;align-items:center;gap:8px">
       <span id="up-dot" style="width:8px;height:8px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>
-      <span id="up-txt">Conectando ao Firebase…</span>
+      <span id="up-txt">Aguardando Firebase…</span>
     </div>
-
     <div class="upz">
       <input type="file" accept=".csv" onchange="doFile(this.files[0])">
       <div style="font-size:2rem;opacity:.25;margin-bottom:.3rem">📤</div>
       <p style="font-size:.85rem;font-weight:700;color:#1d5fa8">Toque aqui ou arraste o CSV</p>
-      <small style="color:#6c7280;font-size:11px">Substitui todos os dados anteriores</small>
+      <small style="color:#6c7280;font-size:11px">Substitui todos os dados anteriores · Separador vírgula</small>
     </div>
-
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin:.5rem 0">
       <button class="btn green" onclick="dlModelo()">⬇ Modelo CSV</button>
       <button class="btn red" onclick="limpar()">🗑 Apagar todos os dados</button>
     </div>
-
     <div class="sh"><h3>Histórico de Uploads</h3><hr></div>
-    <div class="tw"><table><thead><tr><th>Data/Hora</th><th>Responsável</th><th>Registros</th><th>Período</th><th>Status</th></tr></thead><tbody id="hist-body"></tbody></table></div>
-
-    <div class="sh" style="margin-top:.8rem"><h3>Últimos Registros no Firebase</h3><hr></div>
-    <div class="tw"><table><thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th><th>Qualidade</th></tr></thead><tbody id="tb-body"></tbody></table></div>
+    <div class="tw"><table><thead><tr><th>Data/Hora</th><th>Responsável</th><th>Registros</th><th>Período</th></tr></thead><tbody id="hist-body"><tr><td colspan="4" style="text-align:center;padding:.8rem;color:#9ca3af">Aguardando…</td></tr></tbody></table></div>
+    <div class="sh" style="margin-top:.8rem"><h3>Últimos Registros</h3><hr></div>
+    <div class="tw"><table><thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th><th>Qualidade</th></tr></thead><tbody id="tb-body"><tr><td colspan="7" style="text-align:center;padding:.8rem;color:#9ca3af">Aguardando dados…</td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -251,35 +243,13 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
   <div style="max-width:900px;margin:.5rem auto">
     <div class="sh"><h3>Equipe do Projeto</h3><hr></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px">
-      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Coordenador</div>
-        <div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Prof. Dr. Ernandes Sobreira Oliveira Junior</div>
-        <div style="font-size:10.5px;color:#6c7280;line-height:1.7">Prof. Coordenador do Projeto SOPRO<br>UNEMAT · Campus Cáceres-MT<br>PPGCA · ProfÁgua · Licenciatura em Biologia</div>
-      </div>
-      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Doutorando</div>
-        <div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Cleverson Ricardo Soares Viana</div>
-        <div style="font-size:10.5px;color:#6c7280">PPGCA · UNEMAT Cáceres-MT</div>
-      </div>
-      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Pesquisadora</div>
-        <div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Maísa Consuelo dos Santos</div>
-        <div style="font-size:10.5px;color:#6c7280">PPGCA · UNEMAT Cáceres-MT</div>
-      </div>
-      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Iniciação Científica</div>
-        <div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Danielle Ferreira Dias</div>
-        <div style="font-size:10.5px;color:#6c7280">Lic. Ciências Biológicas<br>UNEMAT Cáceres-MT</div>
-      </div>
+      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem"><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Coordenador</div><div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Prof. Dr. Ernandes Sobreira Oliveira Junior</div><div style="font-size:10.5px;color:#6c7280;line-height:1.7">Prof. Coordenador · SOPRO<br>UNEMAT · Campus Cáceres-MT<br>PPGCA · ProfÁgua · Lic. Biologia</div></div>
+      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem"><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Doutorando</div><div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Cleverson Ricardo Soares Viana</div><div style="font-size:10.5px;color:#6c7280">PPGCA · UNEMAT Cáceres-MT</div></div>
+      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem"><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">Pesquisadora</div><div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Maísa Consuelo dos Santos</div><div style="font-size:10.5px;color:#6c7280">PPGCA · UNEMAT Cáceres-MT</div></div>
+      <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem"><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#1d5fa8;font-weight:700;margin-bottom:3px">IC</div><div style="font-size:.85rem;font-weight:700;margin-bottom:4px">Danielle Ferreira Dias</div><div style="font-size:10.5px;color:#6c7280">Lic. Ciências Biológicas · UNEMAT</div></div>
     </div>
-    <div class="sh" style="margin-top:1rem"><h3>Estação</h3><hr></div>
-    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;font-size:11.5px;line-height:1.85">
-      <strong>📍 Cidade Universitária UNEMAT</strong> · Cáceres-MT<br>
-      16°04'S · 57°41'W · ~118m · desde Jun/2023<br>
-      <strong>Sensores:</strong> PM₂.₅ óptico · CO₂ NDIR · Temperatura/UR · Barômetro<br>
-      <strong>Contexto:</strong> Pantanal Norte · transição Cerrado/Pantanal<br>
-      <strong>Contato:</strong> (65) 99932-3724
-    </div>
+    <div class="sh" style="margin-top:1rem"><h3>Estação · 📍 Cidade Universitária UNEMAT · Cáceres-MT</h3><hr></div>
+    <p style="font-size:11.5px;line-height:1.85;background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem">16°04'S · 57°41'W · ~118m · desde Jun/2023<br><strong>Sensores:</strong> PM₂.₅ óptico · CO₂ NDIR · Temperatura/UR · Barômetro<br><strong>Contexto:</strong> Pantanal Norte · transição Cerrado/Pantanal · <strong>Contato:</strong> (65) 99932-3724</p>
   </div>
 </div>
 
@@ -288,52 +258,39 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
 
 <script>
 'use strict';
-var DB='https://brasa-pantanal-default-rtdb.firebaseio.com';
-var ALL=[],FIL=[];
-var SEAS=['Chuvosa','Trans.Chuva->Seca','Seca','Trans.Seca->Chuva'];
+var ALL=[], FIL=[];
 var MOS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 var CLIM=[31,31,32,31,29,27,26,28,30,32,32,31];
 var MC=['#1d5fa8','#1d5fa8','#1d5fa8','#27ae60','#27ae60','#e67e22','#e67e22','#e67e22','#e67e22','#8e44ad','#8e44ad','#1d5fa8'];
 var SC={'Chuvosa':'#1d5fa8','Trans.Chuva->Seca':'#27ae60','Seca':'#e67e22','Trans.Seca->Chuva':'#8e44ad'};
+var SEAS=['Chuvosa','Trans.Chuva->Seca','Seca','Trans.Seca->Chuva'];
 
 function calcITP(d){var zt=(d.temp-30)/5,zp=((d.pm25||0)-15)/18;return+((zt+zp)/Math.SQRT2).toFixed(2);}
 function calcIC(d){if(!d.temp||!d.humidity)return null;var T=d.temp,R=d.humidity/100;return+(T+.348*(R*6.1*Math.exp(17.27*T/(237.3+T)))-4).toFixed(1);}
 function getSeason(d){var m=parseInt(d.slice(5,7));return[12,1,2,3].indexOf(m)>=0?'Chuvosa':[4,5].indexOf(m)>=0?'Trans.Chuva->Seca':[6,7,8,9].indexOf(m)>=0?'Seca':'Trans.Seca->Chuva';}
 
-/* TOAST */
 function toast(msg,t){var z=document.getElementById('tz'),el=document.createElement('div');el.className='toast '+(t||'ok');el.textContent=msg;z.appendChild(el);setTimeout(function(){el.remove();},4500);}
-
-/* STATUS */
-function setFBStatus(ok,txt){
-  var el=document.getElementById('fb-status');
-  el.textContent=txt;el.className=ok?'ok':'err';
-  var dot=document.getElementById('up-dot'),utxt=document.getElementById('up-txt');
-  if(dot)dot.style.background=ok?'#27ae60':'#c0392b';
-  if(utxt)utxt.textContent=ok?'Firebase conectado — pronto para upload':'Sem conexão com Firebase';
+function setStatus(ok,txt){
+  var el=document.getElementById('fb-status');el.textContent=txt;el.className=ok?'ok':'err';
+  var d=document.getElementById('up-dot'),u=document.getElementById('up-txt');
+  if(d)d.style.background=ok?'#27ae60':'#c0392b';
+  if(u)u.textContent=ok?'Firebase conectado — pronto para upload':'Sem conexão';
 }
 function setAlrt(msg,cls){var el=document.getElementById('alrt');el.textContent=msg;el.className='alrt '+(cls||'y');}
 
-/* NAV */
 function go(id,btn){
-  document.querySelectorAll('.pg').forEach(function(p){p.style.display='none';p.classList.remove('on');});
-  var pg=document.getElementById('pg-'+id);if(pg){pg.style.display='block';pg.classList.add('on');}
+  document.querySelectorAll('.pg').forEach(function(p){p.style.display='none';});
+  var pg=document.getElementById('pg-'+id);if(pg)pg.style.display='block';
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('on');});
   if(btn)btn.classList.add('on');
-  if(id==='analise')setTimeout(renderAnalise,50);
-  if(id==='ondas')setTimeout(renderOndas,50);
-  if(id==='upload'){setTimeout(renderTable,50);setTimeout(renderHist,50);}
+  if(id==='analise')setTimeout(renderAnalise,80);
+  if(id==='ondas')setTimeout(renderOndas,80);
+  if(id==='upload'){setTimeout(renderTable,80);setTimeout(renderHist,80);}
   window.scrollTo({top:0,behavior:'smooth'});
 }
-
-/* FILTER */
 function qf(days,btn){
-  document.querySelectorAll('.qb').forEach(function(b){b.classList.remove('on');});
-  btn.classList.add('on');
-  if(!days){FIL=ALL.slice();document.getElementById('d-from').value='';document.getElementById('d-to').value='';}
-  else{var t=new Date(),f=new Date();f.setDate(f.getDate()-days);
-    var fs=f.toISOString().slice(0,10),ts=t.toISOString().slice(0,10);
-    document.getElementById('d-from').value=fs;document.getElementById('d-to').value=ts;
-    FIL=ALL.filter(function(d){return d.date>=fs&&d.date<=ts;});}
+  document.querySelectorAll('.qb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');
+  if(!days){FIL=ALL.slice();}else{var t=new Date(),f=new Date();f.setDate(f.getDate()-days);var fs=f.toISOString().slice(0,10);FIL=ALL.filter(function(d){return d.date>=fs;});}
   renderPainel();
 }
 function applyF(){
@@ -343,7 +300,6 @@ function applyF(){
   renderPainel();toast('Filtro: '+FIL.length+' registros','ok');
 }
 
-/* CARDS */
 function updateCards(){
   var D=ALL;if(!D.length)return;
   var avg=function(k){var a=D.filter(function(d){return d[k]!=null;});return a.length?(a.reduce(function(s,d){return s+parseFloat(d[k]);},0)/a.length).toFixed(1):'—';};
@@ -352,8 +308,7 @@ function updateCards(){
   document.getElementById('c-te').textContent=avg('temp');
   document.getElementById('c-hu').textContent=avg('humidity')+'%';
   document.getElementById('c-it').textContent=avg('itp');
-  var last=D[D.length-1];
-  var sn={'Chuvosa':'Dez–Mar','Trans.Chuva->Seca':'Abr–Mai','Seca':'Jun–Set','Trans.Seca->Chuva':'Out–Nov'};
+  var last=D[D.length-1],sn={'Chuvosa':'Dez–Mar','Trans.Chuva->Seca':'Abr–Mai','Seca':'Jun–Set','Trans.Seca->Chuva':'Out–Nov'};
   document.getElementById('c-se').textContent=last&&last.season||'—';
   document.getElementById('c-su').textContent=last&&sn[last.season]||'';
   document.getElementById('h-n').textContent=D.length;
@@ -366,95 +321,71 @@ function updateCards(){
   else setAlrt('🟢 Qualidade Boa — PM₂.₅='+pm+'µg/m³. Dentro dos padrões CONAMA 491/2022.','ok');
 }
 
-/* ═══ SVG ENGINE ═══ */
-function W(id){var e=document.getElementById(id);return e?e.getBoundingClientRect().width||e.offsetWidth||320:320;}
-function H(id){var e=document.getElementById(id);return e?e.getBoundingClientRect().height||e.offsetHeight||220:220;}
+/* ══ SVG ENGINE ══ */
+function W(id){var e=document.getElementById(id);return e?(e.getBoundingClientRect().width||e.offsetWidth||320):320;}
+function H(id){var e=document.getElementById(id);return e?(e.getBoundingClientRect().height||e.offsetHeight||220):220;}
 function putSVG(id,inner,w,h){var e=document.getElementById(id);if(e)e.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+w+' '+h+'" style="width:100%;height:'+h+'px;display:block;background:#fff">'+inner+'</svg>';}
-
 function hc(t,s){
-  if(s==='RdBu'){if(t<.5){var u=t*2;return'rgb('+~~(41+214*u)+','+~~(128+127*u)+','+~~(185+70*u)+')';}var u=(t-.5)*2;return'rgb('+~~(255-63*u)+','+~~(255-198*u)+','+~~(255-212*u)+')';}
+  if(s==='RdBu'){if(t<.5){var u=t*2;return'rgb('+~~(41+214*u)+','+~~(128+127*u)+','+~~(185+70*u)+')';}var v=(t-.5)*2;return'rgb('+~~(255-63*v)+','+~~(255-198*v)+','+~~(255-212*v)+')';}
   if(t<.4){var u=t/.4;return'rgb('+~~(29+226*u)+','+~~(95+160*u)+','+~~(168+87*u)+')';}
   if(t<.65){var u=(t-.4)/.25;return'rgb(255,'+~~(255-55*u)+','+~~(255-255*u)+')';}
   var u=(t-.65)/.35;return'rgb(255,'+~~(200-200*u)+',0)';
 }
-
 function bxStats(arr){
   if(!arr||!arr.length)return null;
   var s=arr.slice().sort(function(a,b){return a-b;});var n=s.length;
-  var q=function(f){return s[Math.max(0,Math.min(n-1,Math.floor(n*f)));};
+  var q=function(f){return s[Math.max(0,Math.min(n-1,~~(n*f)));};
   var q1=q(.25),q3=q(.75),iqr=q3-q1;
   return{min:Math.max(s[0],q1-1.5*iqr),q1:q1,med:q(.5),q3:q3,max:Math.min(s[n-1],q3+1.5*iqr),mean:s.reduce(function(a,b){return a+b;})/n};
 }
-
-function svgGrid(pad,cW,cH,lo,hi,nT){
-  var g='',yt='';nT=nT||5;
-  for(var i=0;i<=nT;i++){var v=lo+(hi-lo)*i/nT,y=pad.t+cH*(1-(v-lo)/(hi-lo||1));
+function svgG(pad,cW,cH,lo,hi){
+  var g='',yt='';
+  for(var i=0;i<=5;i++){var v=lo+(hi-lo)*i/5,y=pad.t+cH*(1-(v-lo)/(hi-lo||1));
     g+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="#e4e8ee" stroke-width="1"/>';
     yt+='<text x="'+(pad.l-5)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="#6c7280">'+v.toFixed(v<10&&v>-10?1:0)+'</text>';}
-  return{g:g,yt:yt};
+  return g+yt;
 }
 function svgAx(pad,cW,cH){return'<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(pad.t+cH)+'" stroke="#b0b8c4" stroke-width="1.4"/><line x1="'+pad.l+'" y1="'+(pad.t+cH)+'" x2="'+(pad.l+cW)+'" y2="'+(pad.t+cH)+'" stroke="#b0b8c4" stroke-width="1.4"/>';}
-function svgYtitle(pad,cH,lbl){return'<text transform="translate(12,'+(pad.t+cH/2).toFixed(1)+') rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">'+lbl+'</text>';}
+function svgRL(pad,cW,cH,lo,hi,refs){var r='';(refs||[]).forEach(function(rf){var y=pad.t+cH*(1-(rf.v-lo)/(hi-lo||1));r+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+rf.c+'" stroke-width="1.5" stroke-dasharray="5,3"/>';r+='<text x="'+(pad.l+cW+2)+'" y="'+(y+4).toFixed(1)+'" font-size="9.5" fill="'+rf.c+'">'+rf.lbl+'</text>';});return r;}
+function svgXT(Ds,pad,cW,h){var r='';for(var i=0;i<Math.min(8,Ds.length);i++){var idx=~~(i*(Ds.length-1)/(Math.min(8,Ds.length)-1));var x=pad.l+cW*idx/(Ds.length-1||1);r+='<text x="'+x.toFixed(1)+'" y="'+(h-pad.b+13)+'" text-anchor="middle" font-size="10" fill="#6c7280">'+(Ds[idx]&&Ds[idx].date&&Ds[idx].date.slice(0,7)||'')+'</text>';}return r;}
+function svgYT(pad,cH,lbl){return'<text transform="translate(12,'+(pad.t+cH/2).toFixed(1)+') rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">'+lbl+'</text>';}
 
-/* Bar / line time series */
 function drawTS(D,key,col,wrapId,refs){
-  var w=W(wrapId),h=H(wrapId);
-  var pad={l:52,r:refs&&refs.length?38:14,t:12,b:36};
+  var w=W(wrapId),h=H(wrapId),pad={l:52,r:refs&&refs.length?40:14,t:12,b:36};
   var cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
-  var step=Math.max(1,Math.floor(D.length/260));
-  var Ds=D.filter(function(_,i){return i%step===0;});
-  var vals=Ds.map(function(d){return d[key];}).filter(function(v){return v!=null;});
-  if(!vals.length)return;
-  var lo=key==='itp'?Math.min(0,Math.min.apply(null,vals))*1.1:0;
-  var hi=Math.max.apply(null,vals.map(Math.abs))*1.1||10;
-  var toX=function(i){return pad.l+cW*i/(Ds.length-1||1);};
-  var toY=function(v){return pad.t+cH*(1-(v-lo)/(hi-lo||1));};
-  var bw=Math.max(1,cW/Ds.length*.95);
-  var bars='';
-  Ds.forEach(function(d,i){
-    var v=d[key];if(v==null)return;
+  var step=Math.max(1,~~(D.length/260)),Ds=D.filter(function(_,i){return i%step===0;});
+  var vals=Ds.map(function(d){return d[key];}).filter(function(v){return v!=null;});if(!vals.length)return;
+  var lo=key==='itp'?Math.min(0,Math.min.apply(null,vals))*1.1:0,hi=Math.max.apply(null,vals.map(Math.abs))*1.1||10;
+  var toX=function(i){return pad.l+cW*i/(Ds.length-1||1);},toY=function(v){return pad.t+cH*(1-(v-lo)/(hi-lo||1));};
+  var bw=Math.max(1,cW/Ds.length*.95),bars='';
+  Ds.forEach(function(d,i){var v=d[key];if(v==null)return;
     var fill=col;
     if(key==='pm25'){fill=v>60?'#c0392b':v>25?'#e67e22':v>10?'#e8a020':'#27ae6077';}
     if(key==='itp'){fill=v>=2?'#c0392b':v>=1?'#e8a020':v>=0?'#27ae60':'#1d5fa8';}
-    if(key==='anom'){fill=v>=5?'#8e44ad':v>=3?'#c0392b':v>=0?'#e67e22':v>=-3?'#aed6f1':'#1d5fa8';}
-    var y0=toY(0),yv=toY(v),barH=Math.abs(y0-yv);
-    bars+='<rect x="'+(toX(i)-bw/2).toFixed(1)+'" y="'+Math.min(y0,yv).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(.8,barH).toFixed(1)+'" fill="'+fill+'" opacity=".85"/>';
-  });
-  var gd=svgGrid(pad,cW,cH,lo,hi);
-  var refLines='';
-  (refs||[]).forEach(function(r){var y=toY(r.v);refLines+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+r.c+'" stroke-width="1.5" stroke-dasharray="5,3"/>';refLines+='<text x="'+(pad.l+cW+2)+'" y="'+(y+4).toFixed(1)+'" font-size="9.5" fill="'+r.c+'">'+r.lbl+'</text>';});
-  var xt='';var nxt=Math.min(8,Ds.length);
-  for(var i=0;i<nxt;i++){var idx=Math.floor(i*(Ds.length-1)/(nxt-1));xt+='<text x="'+toX(idx).toFixed(1)+'" y="'+(h-pad.b+14)+'" text-anchor="middle" font-size="10" fill="#6c7280">'+(Ds[idx]&&Ds[idx].date&&Ds[idx].date.slice(0,7)||'')+'</text>';}
+    if(key==='anom'){fill=v>=5?'#8e44ad':v>=3?'#c0392b':v>=0?'#e67e22':'#1d5fa8';}
+    var y0=toY(0),yv=toY(v),bH=Math.abs(y0-yv);
+    bars+='<rect x="'+(toX(i)-bw/2).toFixed(1)+'" y="'+Math.min(y0,yv).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(.8,bH).toFixed(1)+'" fill="'+fill+'" opacity=".85"/>';});
   var sel='<rect id="sel-'+wrapId+'" x="0" y="0" width="0" height="'+cH+'" fill="rgba(29,95,168,.13)" stroke="#1d5fa8" stroke-width="1" stroke-dasharray="3,2" transform="translate('+pad.l+','+pad.t+')" pointer-events="none"/>';
-  putSVG(wrapId,gd.g+refLines+bars+svgAx(pad,cW,cH)+xt+gd.yt+svgYtitle(pad,cH,'')+sel,w,h);
+  putSVG(wrapId,svgG(pad,cW,cH,lo,hi)+svgRL(pad,cW,cH,lo,hi,refs)+bars+svgAx(pad,cW,cH)+svgXT(Ds,pad,cW,h)+svgYT(pad,cH,'')+sel,w,h);
   addSel(wrapId,pad,cW,Ds);
 }
 
 function drawLine(D,key,col,wrapId,yLbl,refs){
-  var w=W(wrapId),h=H(wrapId);
-  var pad={l:52,r:14,t:12,b:34};
+  var w=W(wrapId),h=H(wrapId),pad={l:52,r:14,t:12,b:34};
   var cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
-  var step=Math.max(1,Math.floor(D.length/200));
-  var Ds=D.filter(function(_,i){return i%step===0;});
-  var vals=Ds.map(function(d){return d[key];}).filter(function(v){return v!=null;});
-  if(!vals.length)return;
+  var step=Math.max(1,~~(D.length/200)),Ds=D.filter(function(_,i){return i%step===0;});
+  var vals=Ds.map(function(d){return d[key];}).filter(function(v){return v!=null;});if(!vals.length)return;
   var lo=Math.min.apply(null,vals)*.97,hi=Math.max.apply(null,vals)*1.03;
-  var toX=function(i){return pad.l+cW*i/(Ds.length-1||1);};
-  var toY=function(v){return pad.t+cH*(1-(v-lo)/(hi-lo||1));};
-  var pts=[];Ds.forEach(function(d,i){var v=d[key];if(v!=null)pts.push([toX(i),toY(v)]);});
-  if(!pts.length)return;
-  var path='M'+pts.map(function(p){return p.map(function(v){return v.toFixed(1);}).join(',');}).join('L');
-  var fill='M'+pts[0].map(function(v){return v.toFixed(1);}).join(',')+' L'+pts.map(function(p){return p.map(function(v){return v.toFixed(1);}).join(',');}).join('L')+' L'+pts[pts.length-1][0].toFixed(1)+','+toY(lo).toFixed(1)+' L'+pts[0][0].toFixed(1)+','+toY(lo).toFixed(1)+' Z';
-  var gd=svgGrid(pad,cW,cH,lo,hi);
-  var rl='';(refs||[]).forEach(function(r){var y=toY(r.v);rl+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+r.c+'" stroke-width="1.4" stroke-dasharray="5,3"/>';});
-  var xt='';var nxt=Math.min(8,Ds.length);
-  for(var i=0;i<nxt;i++){var idx=Math.floor(i*(Ds.length-1)/(nxt-1));xt+='<text x="'+toX(idx).toFixed(1)+'" y="'+(h-pad.b+13)+'" text-anchor="middle" font-size="10" fill="#6c7280">'+(Ds[idx]&&Ds[idx].date&&Ds[idx].date.slice(0,7)||'')+'</text>';}
-  putSVG(wrapId,gd.g+rl+'<path d="'+fill+'" fill="'+col+'" opacity=".12"/><path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round"/>'+svgAx(pad,cW,cH)+xt+gd.yt+svgYtitle(pad,cH,yLbl||''),w,h);
+  var toX=function(i){return pad.l+cW*i/(Ds.length-1||1);},toY=function(v){return pad.t+cH*(1-(v-lo)/(hi-lo||1));};
+  var pts=[];Ds.forEach(function(d,i){var v=d[key];if(v!=null)pts.push([toX(i),toY(v)]);});if(!pts.length)return;
+  var path='M'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join('L');
+  var area='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1)+' L'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join('L')+' L'+pts[pts.length-1][0].toFixed(1)+','+toY(lo).toFixed(1)+' L'+pts[0][0].toFixed(1)+','+toY(lo).toFixed(1)+' Z';
+  var rl=svgRL(pad,cW,cH,lo,hi,refs);
+  putSVG(wrapId,svgG(pad,cW,cH,lo,hi)+rl+'<path d="'+area+'" fill="'+col+'" opacity=".12"/><path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round"/>'+svgAx(pad,cW,cH)+svgXT(Ds,pad,cW,h)+svgYT(pad,cH,yLbl||''),w,h);
 }
 
 function drawBoxplot(labels,stats,colors,wrapId,yLbl,yMinIn,yMaxIn,refs){
-  var w=W(wrapId),h=H(wrapId);
-  var legH=32,svgH=h+legH;
+  var w=W(wrapId),h=H(wrapId),legH=32,svgH=h+legH;
   var pad={l:52,r:refs&&refs.length?40:16,t:14,b:42};
   var cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
   var valid=stats.filter(Boolean);if(!valid.length)return;
@@ -465,14 +396,11 @@ function drawBoxplot(labels,stats,colors,wrapId,yLbl,yMinIn,yMaxIn,refs){
   var n=labels.length,bw=Math.min(cW/n*.52,40);
   var bands='';
   if(refs&&refs.length){var sr=refs.slice().sort(function(a,b){return a.v-b.v;});var bc=['rgba(232,160,32,.07)','rgba(230,126,34,.08)','rgba(192,57,43,.09)'];
-    sr.forEach(function(r,i){var y1=toY(r.v),y0=i>0?toY(sr[i-1].v):pad.t+cH;bands+='<rect x="'+pad.l+'" y="'+y1.toFixed(1)+'" width="'+cW+'" height="'+(y0-y1).toFixed(1)+'" fill="'+bc[i%bc.length]+'"/>';});}
-  var gd=svgGrid(pad,cW,cH,lo,hi,6);
-  var rl='';(refs||[]).forEach(function(r){var y=toY(r.v);rl+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+r.c+'" stroke-width="1.5" stroke-dasharray="5,3"/>';rl+='<text x="'+(pad.l+cW+2)+'" y="'+y.toFixed(1)+'" dominant-baseline="middle" font-size="9.5" fill="'+r.c+'">'+r.lbl+'</text>';});
+    sr.forEach(function(r,i){var y1=toY(r.v),y0=i>0?toY(sr[i-1].v):pad.t+cH;bands+='<rect x="'+pad.l+'" y="'+y1.toFixed(1)+'" width="'+cW+'" height="'+(y0-y1).toFixed(1)+'" fill="'+bc[i%3]+'"/>';});}
   var boxes='';
   stats.forEach(function(s,i){
     if(!s)return;
-    var cx=pad.l+cW*(i+.5)/n;
-    var c=Array.isArray(colors)?colors[i%colors.length]:(colors||'#1d5fa8');
+    var cx=pad.l+cW*(i+.5)/n,c=Array.isArray(colors)?colors[i%colors.length]:(colors||'#1d5fa8');
     var yN=toY(s.min),yX=toY(s.max),yQ1=toY(s.q1),yQ3=toY(s.q3),yM=toY(s.med),yMn=toY(s.mean);
     boxes+='<line x1="'+cx.toFixed(1)+'" y1="'+yX.toFixed(1)+'" x2="'+cx.toFixed(1)+'" y2="'+yN.toFixed(1)+'" stroke="'+c+'" stroke-width="1.7"/>';
     [yN,yX].forEach(function(y){boxes+='<line x1="'+(cx-bw*.3).toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+(cx+bw*.3).toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="'+c+'" stroke-width="1.7"/>';});
@@ -481,56 +409,37 @@ function drawBoxplot(labels,stats,colors,wrapId,yLbl,yMinIn,yMaxIn,refs){
     boxes+='<line x1="'+(cx-bw/2).toFixed(1)+'" y1="'+yM.toFixed(1)+'" x2="'+(cx+bw/2).toFixed(1)+'" y2="'+yM.toFixed(1)+'" stroke="'+c+'" stroke-width="3.5"/>';
     boxes+='<circle cx="'+cx.toFixed(1)+'" cy="'+yMn.toFixed(1)+'" r="3.8" fill="white" stroke="'+c+'" stroke-width="1.8"/>';
     var lbl=(labels[i]||'').replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
-    boxes+='<text x="'+cx.toFixed(1)+'" y="'+(pad.t+cH+15).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="#374151">'+lbl+'</text>';
-  });
-  var leg='<g transform="translate('+pad.l+','+(h+6).toFixed(1)+')">'+'<line x1="0" y1="5" x2="18" y2="5" stroke="#555" stroke-width="3.5"/><text x="22" y="9" font-size="9.5" fill="#555">Mediana</text>'+'<circle cx="68" cy="5" r="3.5" fill="white" stroke="#555" stroke-width="1.5"/><text x="74" y="9" font-size="9.5" fill="#555">Média</text>'+'<rect x="112" y="1" width="12" height="8" fill="rgba(100,100,100,.2)" stroke="#555" stroke-width="1.5" rx="1.5"/><text x="127" y="9" font-size="9.5" fill="#555">IQR</text></g>';
-  putSVG(wrapId,bands+gd.g+rl+boxes+svgAx(pad,cW,cH)+gd.yt+svgYtitle(pad,cH,yLbl||'')+leg,w,svgH);
+    boxes+='<text x="'+cx.toFixed(1)+'" y="'+(pad.t+cH+15).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="#374151">'+lbl+'</text>';});
+  var leg='<g transform="translate('+pad.l+','+(h+6).toFixed(1)+')"><line x1="0" y1="5" x2="18" y2="5" stroke="#555" stroke-width="3.5"/><text x="22" y="9" font-size="9.5" fill="#555">Mediana</text><circle cx="68" cy="5" r="3.5" fill="white" stroke="#555" stroke-width="1.5"/><text x="74" y="9" font-size="9.5" fill="#555">Média</text><rect x="112" y="1" width="12" height="8" fill="rgba(100,100,100,.2)" stroke="#555" stroke-width="1.5" rx="1.5"/><text x="127" y="9" font-size="9.5" fill="#555">IQR</text></g>';
+  putSVG(wrapId,bands+svgG(pad,cW,cH,lo,hi)+svgRL(pad,cW,cH,lo,hi,refs)+boxes+svgAx(pad,cW,cH)+svgYT(pad,cH,yLbl||'')+leg,w,svgH);
   document.getElementById(wrapId).style.height=svgH+'px';
 }
 
 function drawStacked(labels,dataPerGroup,seriesLabels,seriesColors,wrapId){
-  var w=W(wrapId),h=H(wrapId);
-  var legR=Math.ceil(seriesLabels.length/2),legH=legR*15+10,svgH=h+legH;
-  var pad={l:46,r:12,t:12,b:36};
-  var cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
+  var w=W(wrapId),h=H(wrapId),legR=Math.ceil(seriesLabels.length/2),legH=legR*15+10,svgH=h+legH;
+  var pad={l:46,r:12,t:12,b:36},cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
   var bw=Math.min(cW/labels.length*.58,50);
   var g='',yt='';
   [0,20,40,60,80,100].forEach(function(v){var y=pad.t+cH*(1-v/100);g+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="#e4e8ee" stroke-width="1"/>';yt+='<text x="'+(pad.l-5)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="#6c7280">'+v+'%</text>';});
   var bars='',xl='';
   labels.forEach(function(lbl,i){
     var vals=dataPerGroup[i],cx=pad.l+cW*(i+.5)/labels.length,cum=0;
-    vals.forEach(function(v,si){
-      if(!v||v<=0)return;
-      var barH=cH*v/100,y=pad.t+cH*(1-(cum+v)/100);
-      bars+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+barH.toFixed(1)+'" fill="'+seriesColors[si]+'" opacity=".88"/>';
-      if(barH>13)bars+='<text x="'+cx.toFixed(1)+'" y="'+(y+barH/2+4).toFixed(1)+'" text-anchor="middle" font-size="10" font-weight="700" fill="white">'+v.toFixed(0)+'%</text>';
-      cum+=v;
-    });
-    var sl=lbl.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
-    xl+='<text x="'+cx.toFixed(1)+'" y="'+(pad.t+cH+14).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="#374151">'+sl+'</text>';
-  });
-  var lCols=2,lW=Math.floor((w-pad.l)/lCols),leg='';
-  seriesLabels.forEach(function(lbl,i){var col=i%lCols,row=Math.floor(i/lCols),lx=pad.l+col*lW,ly=h+5+row*15;leg+='<rect x="'+lx+'" y="'+ly+'" width="12" height="9" fill="'+seriesColors[i]+'" opacity=".88"/><text x="'+(lx+15)+'" y="'+(ly+8)+'" font-size="9.5" fill="#374151">'+lbl+'</text>';});
+    vals.forEach(function(v,si){if(!v||v<=0)return;var bH=cH*v/100,y=pad.t+cH*(1-(cum+v)/100);bars+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bH.toFixed(1)+'" fill="'+seriesColors[si]+'" opacity=".88"/>';if(bH>13)bars+='<text x="'+cx.toFixed(1)+'" y="'+(y+bH/2+4).toFixed(1)+'" text-anchor="middle" font-size="10" font-weight="700" fill="white">'+v.toFixed(0)+'%</text>';cum+=v;});
+    xl+='<text x="'+cx.toFixed(1)+'" y="'+(pad.t+cH+14).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="#374151">'+lbl.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C')+'</text>';});
+  var lCols=2,lW=~~((w-pad.l)/lCols),leg='';
+  seriesLabels.forEach(function(lbl,i){var col=i%lCols,row=~~(i/lCols),lx=pad.l+col*lW,ly=h+5+row*15;leg+='<rect x="'+lx+'" y="'+ly+'" width="12" height="9" fill="'+seriesColors[i]+'" opacity=".88"/><text x="'+(lx+15)+'" y="'+(ly+8)+'" font-size="9.5" fill="#374151">'+lbl+'</text>';});
   putSVG(wrapId,g+bars+svgAx(pad,cW,cH)+yt+xl+leg+'<text transform="translate(12,'+(pad.t+cH/2).toFixed(1)+') rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">%</text>',w,svgH);
   document.getElementById(wrapId).style.height=svgH+'px';
 }
 
 function drawHeatmap(matrix,xLabels,yLabels,wrapId,scheme,zmin,zmax){
-  var w=W(wrapId),h=H(wrapId);
-  var pad={l:46,r:80,t:28,b:28};
+  var w=W(wrapId),h=H(wrapId),pad={l:46,r:80,t:28,b:28};
   var cW=(w-pad.l-pad.r)/xLabels.length,cH=(h-pad.t-pad.b)/yLabels.length;
-  if(!zmin&&!zmax){var mn=Infinity,mx=-Infinity;matrix.forEach(function(r){r.forEach(function(v){if(v!=null){mn=Math.min(mn,v);mx=Math.max(mx,v);}});});zmin=mn;zmax=mx;}
+  if(zmin==null){var mn=Infinity,mx=-Infinity;matrix.forEach(function(r){r.forEach(function(v){if(v!=null){mn=Math.min(mn,v);mx=Math.max(mx,v);}});});zmin=mn;zmax=mx;}
   var cells='',xlbls='',ylbls='';
   matrix.forEach(function(row,ri){
     ylbls+='<text x="'+(pad.l-4)+'" y="'+(pad.t+ri*cH+cH/2+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#374151">'+yLabels[ri]+'</text>';
-    row.forEach(function(v,ci){
-      if(v==null)return;
-      var t=(v-zmin)/(zmax-zmin||1),x=pad.l+ci*cW,y=pad.t+ri*cH;
-      cells+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+cW.toFixed(1)+'" height="'+cH.toFixed(1)+'" fill="'+hc(t,scheme)+'"/>';
-      var tc=Math.abs(t-.5)>.28?'white':'#1c1e22';
-      cells+='<text x="'+(x+cW/2).toFixed(1)+'" y="'+(y+cH/2+4).toFixed(1)+'" text-anchor="middle" font-size="'+Math.min(cH*.38,12).toFixed(0)+'" font-weight="700" fill="'+tc+'">'+(typeof v==='number'?v.toFixed(1):'')+'</text>';
-    });
-  });
+    row.forEach(function(v,ci){if(v==null)return;var t=(v-zmin)/(zmax-zmin||1),x=pad.l+ci*cW,y=pad.t+ri*cH;cells+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+cW.toFixed(1)+'" height="'+cH.toFixed(1)+'" fill="'+hc(t,scheme)+'"/>';var tc=Math.abs(t-.5)>.28?'white':'#1c1e22';cells+='<text x="'+(x+cW/2).toFixed(1)+'" y="'+(y+cH/2+4).toFixed(1)+'" text-anchor="middle" font-size="'+~~Math.min(cH*.38,12)+'" font-weight="700" fill="'+tc+'">'+v.toFixed(1)+'</text>';});});
   xLabels.forEach(function(lbl,ci){xlbls+='<text x="'+(pad.l+ci*cW+cW/2).toFixed(1)+'" y="'+(pad.t-5).toFixed(1)+'" text-anchor="middle" font-size="10" fill="#374151">'+lbl+'</text>';});
   var cbH=h-pad.t-pad.b,cbX=w-pad.r+8,cb='<defs><linearGradient id="cbg" x1="0" y1="1" x2="0" y2="0">';
   for(var i=0;i<=10;i++)cb+='<stop offset="'+(i*10)+'%" stop-color="'+hc(i/10,scheme)+'"/>';
@@ -540,31 +449,29 @@ function drawHeatmap(matrix,xLabels,yLabels,wrapId,scheme,zmin,zmax){
 }
 
 function drawScatter(datasets,xLbl,yLbl,wrapId,extras){
-  var w=W(wrapId),h=H(wrapId);
-  var legH=28,svgH=h+legH;
-  var pad={l:52,r:14,t:12,b:36};
-  var cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
+  var w=W(wrapId),h=H(wrapId),legH=28,svgH=h+legH;
+  var pad={l:52,r:14,t:12,b:36},cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
   var allX=[],allY=[];datasets.forEach(function(ds){ds.pts.forEach(function(p){allX.push(p.x);allY.push(p.y);});});
   if(!allX.length)return;
-  var xlo=Math.min.apply(null,allX)*.98,xhi=Math.max.apply(null,allX)*1.02;
-  var ylo=0,yhi=Math.max.apply(null,allY)*1.08;
+  var xlo=Math.min.apply(null,allX)*.98,xhi=Math.max.apply(null,allX)*1.02,ylo=0,yhi=Math.max.apply(null,allY)*1.08;
   var toX=function(v){return pad.l+cW*(v-xlo)/(xhi-xlo||1);};
   var toY=function(v){return pad.t+cH*(1-(v-ylo)/(yhi-ylo||1));};
   var pts='';datasets.forEach(function(ds){ds.pts.slice(0,120).forEach(function(p){pts+='<circle cx="'+toX(p.x).toFixed(1)+'" cy="'+toY(p.y).toFixed(1)+'" r="3.8" fill="'+ds.color+'" opacity=".6"/>';});});
-  var ext='';(extras||[]).forEach(function(e){if(e.type==='vline'){var x=toX(e.v);ext+='<line x1="'+x.toFixed(1)+'" y1="'+pad.t+'" x2="'+x.toFixed(1)+'" y2="'+(pad.t+cH)+'" stroke="'+(e.c||'#95a5a6')+'" stroke-width="1.2" stroke-dasharray="4,3"/>';}if(e.type==='hline'){var y=toY(e.v);ext+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+(e.c||'#95a5a6')+'" stroke-width="1.2" stroke-dasharray="4,3"/>";}}});
-  var gd=svgGrid(pad,cW,cH,ylo,yhi);
+  var ext='';(extras||[]).forEach(function(e){
+    if(e.type==='vline'){var x=toX(e.v);ext+='<line x1="'+x.toFixed(1)+'" y1="'+pad.t+'" x2="'+x.toFixed(1)+'" y2="'+(pad.t+cH)+'" stroke="#95a5a6" stroke-width="1.2" stroke-dasharray="4,3"/>';}
+    if(e.type==='hline'){var y=toY(e.v);ext+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="#95a5a6" stroke-width="1.2" stroke-dasharray="4,3"/>';}
+  });
   var xt='';for(var i=0;i<=4;i++){var v=xlo+(xhi-xlo)*i/4,x=toX(v);xt+='<text x="'+x.toFixed(1)+'" y="'+(pad.t+cH+13).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="#6c7280">'+v.toFixed(0)+'</text>';}
-  var leg='';datasets.forEach(function(ds,i){var cols=3,col=i%cols,row=Math.floor(i/cols),lx=pad.l+col*(cW/cols),ly=h+4+row*14;leg+='<circle cx="'+(lx+5)+'" cy="'+(ly+5)+'" r="4" fill="'+ds.color+'" opacity=".8"/><text x="'+(lx+13)+'" y="'+(ly+9)+'" font-size="9.5" fill="#374151">'+ds.label+'</text>';});
-  putSVG(wrapId,gd.g+ext+pts+svgAx(pad,cW,cH)+xt+gd.yt+svgYtitle(pad,cH,yLbl||'')+'<text x="'+(pad.l+cW/2).toFixed(1)+'" y="'+(pad.t+cH+26).toFixed(1)+'" text-anchor="middle" font-size="11" fill="#374151">'+(xLbl||'')+'</text>'+leg,w,svgH);
+  var leg='';datasets.forEach(function(ds,i){var cols=3,col=i%cols,row=~~(i/cols),lx=pad.l+col*(cW/cols),ly=h+4+row*14;leg+='<circle cx="'+(lx+5)+'" cy="'+(ly+5)+'" r="4" fill="'+ds.color+'" opacity=".8"/><text x="'+(lx+13)+'" y="'+(ly+9)+'" font-size="9.5" fill="#374151">'+ds.label+'</text>';});
+  putSVG(wrapId,svgG(pad,cW,cH,ylo,yhi)+ext+pts+svgAx(pad,cW,cH)+xt+svgYT(pad,cH,yLbl||'')+'<text x="'+(pad.l+cW/2).toFixed(1)+'" y="'+(pad.t+cH+26).toFixed(1)+'" text-anchor="middle" font-size="11" fill="#374151">'+xLbl+'</text>'+leg,w,svgH);
   document.getElementById(wrapId).style.height=svgH+'px';
 }
 
-/* Drag-to-select */
 function addSel(wrapId,pad,cW,Ds){
   var wrap=document.getElementById(wrapId);if(!wrap)return;
   var drag={on:false,x0:0};
   var getSel=function(){return wrap.querySelector('[id="sel-'+wrapId+'"]');};
-  var apply=function(x0,x1){var w=x1-x0;if(w<6)return;var i0=Math.max(0,Math.floor(x0/cW*Ds.length)),i1=Math.min(Ds.length-1,Math.ceil(x1/cW*Ds.length));var d0=Ds[i0]&&Ds[i0].date,d1=Ds[i1]&&Ds[i1].date;if(d0&&d1){document.getElementById('d-from').value=d0;document.getElementById('d-to').value=d1;document.querySelectorAll('.qb').forEach(function(b){b.classList.remove('on');});toast('Selecionado: '+d0+' → '+d1,'ok');}};
+  var apply=function(x0,x1){if(x1-x0<6)return;var i0=Math.max(0,~~(x0/cW*Ds.length)),i1=Math.min(Ds.length-1,~~(x1/cW*Ds.length));var d0=Ds[i0]&&Ds[i0].date,d1=Ds[i1]&&Ds[i1].date;if(d0&&d1){document.getElementById('d-from').value=d0;document.getElementById('d-to').value=d1;document.querySelectorAll('.qb').forEach(function(b){b.classList.remove('on');});toast('Selecionado: '+d0+' → '+d1,'ok');}};
   wrap.addEventListener('mousedown',function(e){var r=wrap.getBoundingClientRect(),relX=e.clientX-r.left-pad.l;if(relX>=0&&relX<=cW){drag={on:true,x0:relX};e.preventDefault();}});
   wrap.addEventListener('mousemove',function(e){if(!drag.on)return;var r=wrap.getBoundingClientRect(),relX=Math.max(0,Math.min(cW,e.clientX-r.left-pad.l));var sel=getSel();if(sel){sel.setAttribute('x',Math.min(drag.x0,relX));sel.setAttribute('width',Math.abs(relX-drag.x0));}});
   wrap.addEventListener('mouseup',function(e){if(!drag.on)return;drag.on=false;var r=wrap.getBoundingClientRect(),relX=Math.max(0,Math.min(cW,e.clientX-r.left-pad.l));apply(Math.min(drag.x0,relX),Math.max(drag.x0,relX));});
@@ -574,7 +481,7 @@ function addSel(wrapId,pad,cW,Ds){
   wrap.addEventListener('touchend',function(e){if(!drag.on)return;drag.on=false;var r=wrap.getBoundingClientRect(),relX=Math.max(0,Math.min(cW,(e.changedTouches[0]&&e.changedTouches[0].clientX||0)-r.left-pad.l));apply(Math.min(drag.x0,relX),Math.max(drag.x0,relX));});
 }
 
-/* ═══ PAINEL ═══ */
+/* ══ PAGES ══ */
 function renderPainel(){
   var D=FIL;if(!D.length)return;
   drawTS(D,'pm25','#c0392b','cw-pm25',[{v:15,c:'#e8a020',lbl:'PI1'},{v:25,c:'#c0392b',lbl:'PI2'}]);
@@ -586,8 +493,6 @@ function renderPainel(){
   var teBP=MOS.map(function(_,m){return bxStats(D.filter(function(d){return new Date(d.date).getMonth()===m&&d.temp!=null;}).map(function(d){return d.temp;}));});
   drawBoxplot(MOS,teBP,MC,'cw-te-bp','Temperatura (°C)');
 }
-
-/* ═══ ANÁLISE ═══ */
 function renderAnalise(){
   var D=FIL;if(!D.length)return;
   var Da=D.map(function(d){return Object.assign({},d,{itp:d.itp!=null?d.itp:calcITP(d)});});
@@ -599,18 +504,14 @@ function renderAnalise(){
   drawStacked(SEAS,clsD,cls,clsC,'cw-itp-st');
   var itpMBP=MOS.map(function(_,m){return bxStats(Da.filter(function(d){return new Date(d.date).getMonth()===m;}).map(function(d){return d.itp;}));});
   drawBoxplot(MOS,itpMBP,MC,'cw-itp-mbp','ITP',null,null,[{v:1,c:'#e8a020',lbl:'Alerta'},{v:2,c:'#c0392b',lbl:'Crítico'}]);
-  /* ITP heatmap from real data */
   var years=[];Da.forEach(function(d){var y=d.date.slice(0,4);if(years.indexOf(y)<0)years.push(y);});years.sort();
   var hZ=years.map(function(y){return MOS.map(function(_,m){var a=Da.filter(function(d){return d.date.slice(0,4)===y&&new Date(d.date).getMonth()===m;}).map(function(d){return d.itp;});return a.length?+(a.reduce(function(s,v){return s+v;},0)/a.length).toFixed(2):null;});});
   if(hZ.length)drawHeatmap(hZ,MOS,years,'cw-itp-hm','RdBu',-2,3);
-  /* Quadrant scatter */
-  drawScatter(SEAS.map(function(s){return{label:s,color:SC[s]||'#888',pts:D.filter(function(d){return d.season===s&&d.temp&&d.pm25;}).map(function(d){return{x:d.temp,y:d.pm25};}).slice(0,100)};}), 'Temperatura (°C)','PM₂.₅ (µg/m³)','cw-quad',[{type:'vline',v:33,c:'#95a5a6'},{type:'hline',v:12,c:'#95a5a6'}]);
+  drawScatter(SEAS.map(function(s){return{label:s,color:SC[s]||'#888',pts:D.filter(function(d){return d.season===s&&d.temp&&d.pm25;}).map(function(d){return{x:d.temp,y:d.pm25};}).slice(0,100)};}), 'Temperatura (°C)','PM₂.₅ (µg/m³)','cw-quad',[{type:'vline',v:33},{type:'hline',v:12}]);
   var TM=33,PMT=12;
   var qD=SEAS.map(function(s){var a=D.filter(function(d){return d.season===s&&d.temp&&d.pm25;}),t=a.length||1;return[+(a.filter(function(d){return d.temp>=TM&&d.pm25>=PMT;}).length/t*100).toFixed(1),+(a.filter(function(d){return d.temp>=TM&&d.pm25<PMT;}).length/t*100).toFixed(1),+(a.filter(function(d){return d.temp<TM&&d.pm25>=PMT;}).length/t*100).toFixed(1),+(a.filter(function(d){return d.temp<TM&&d.pm25<PMT;}).length/t*100).toFixed(1)];});
   drawStacked(SEAS,qD,['Q1 Quente+Poluído','Q2 Quente+Limpo','Q3 Frio+Poluído','Q4 Frio+Limpo'],['#c0392b','#e67e22','#8e44ad','#1d5fa8'],'cw-qbar');
 }
-
-/* ═══ ONDAS ═══ */
 function renderOndas(){
   var D=FIL;if(!D.length)return;
   var ref=D.map(function(d){return CLIM[new Date(d.date).getMonth()];});
@@ -623,66 +524,56 @@ function renderOndas(){
   drawStacked(SEAS,icR,['Confortável (<27°C)','Cautela (27–32°C)','Ext. Cautela (32–41°C)','Perigo (>41°C)'],['#1d5fa8','#e8a020','#e67e22','#c0392b'],'cw-ic-st');
 }
 
-/* ═══ DOWNLOAD PNG ═══ */
+/* ══ TABLE & HIST ══ */
+function renderTable(){
+  var tbody=document.getElementById('tb-body');if(!tbody)return;
+  if(!ALL.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:.8rem;color:#9ca3af">Sem dados.</td></tr>';return;}
+  var r=ALL.slice().reverse().slice(0,40);
+  tbody.innerHTML=r.map(function(d){var p=d.pm25?parseFloat(d.pm25).toFixed(1):'—';var rsk=d.pm25>60?'<span class="rsk rx">Péssima</span>':d.pm25>25?'<span class="rsk rh">Alta</span>':d.pm25>10?'<span class="rsk rm">Mod.</span>':'<span class="rsk rok">Boa</span>';return'<tr><td>'+d.date+'</td><td>'+p+'</td><td>'+(d.co2||'—')+'</td><td>'+(d.temp?parseFloat(d.temp).toFixed(1):'—')+'</td><td>'+(d.humidity||'—')+'</td><td>'+(d.season||'—')+'</td><td>'+rsk+'</td></tr>';}).join('');
+}
+function renderHist(){
+  if(!window._fbReady)return;
+  var tbody=document.getElementById('hist-body');if(!tbody)return;
+  window._get(window._ref(window._db,'sopro/uploads')).then(function(snap){
+    var data=snap.val();
+    if(!data){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:.8rem;color:#9ca3af">Nenhum upload registrado.</td></tr>';return;}
+    var r=Object.values(data).sort(function(a,b){return b.ts-a.ts;}).slice(0,10);
+    tbody.innerHTML=r.map(function(u){return'<tr><td>'+new Date(u.ts).toLocaleString('pt-BR')+'</td><td>'+u.user+'</td><td>'+u.records+'</td><td>'+u.period+'</td></tr>';}).join('');
+  }).catch(function(){});
+}
+
+/* ══ DOWNLOAD ══ */
 function dlPNG(wrapId,fname){
   var wrap=document.getElementById(wrapId),svgEl=wrap&&wrap.querySelector('svg');
   if(!svgEl){toast('Gráfico não encontrado','e');return;}
   var s=new XMLSerializer().serializeToString(svgEl);
-  var vb=svgEl.viewBox&&svgEl.viewBox.baseVal;
-  var sw=vb&&vb.width||svgEl.getBoundingClientRect().width||600;
-  var sh=vb&&vb.height||svgEl.getBoundingClientRect().height||400;
+  var vb=svgEl.viewBox&&svgEl.viewBox.baseVal,sw=vb&&vb.width||600,sh=vb&&vb.height||400;
   var canvas=document.createElement('canvas');canvas.width=sw*2;canvas.height=sh*2;
   var ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  var img=new Image();var blob=new Blob([s],{type:'image/svg+xml'});var url=URL.createObjectURL(blob);
-  img.onload=function(){ctx.scale(2,2);ctx.drawImage(img,0,0,sw,sh);var a=document.createElement('a');a.href=canvas.toDataURL('image/png',1);a.download='SOPRO_'+fname+'.png';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},300);toast('PNG salvo: '+fname,'ok');};
-  img.onerror=function(){var a=document.createElement('a');a.href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);a.download='SOPRO_'+fname+'.svg';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);toast('SVG salvo: '+fname,'w');};
+  var img=new Image(),blob=new Blob([s],{type:'image/svg+xml'}),url=URL.createObjectURL(blob);
+  img.onload=function(){ctx.scale(2,2);ctx.drawImage(img,0,0,sw,sh);var a=document.createElement('a');a.href=canvas.toDataURL('image/png',1);a.download='SOPRO_'+fname+'.png';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},300);toast('PNG: '+fname,'ok');};
+  img.onerror=function(){var a=document.createElement('a');a.href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);a.download='SOPRO_'+fname+'.svg';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);toast('SVG: '+fname,'w');};
   img.src=url;
 }
-
-/* ═══ DOWNLOAD CSV ═══ */
 function dlCSVk(key,label){
-  var D=FIL;if(!D.length){toast('Nenhum dado','w');return;}
+  var D=FIL;if(!D.length){toast('Sem dados','w');return;}
   var f=document.getElementById('d-from').value||D[0].date,t=document.getElementById('d-to').value||D[D.length-1].date;
   var rows=['data,'+key].concat(D.map(function(d){return d.date+','+(d[key]!=null?d[key]:'');})).join('\n');
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows);a.download='SOPRO_'+label+'_'+f+'_'+t+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);toast('CSV: '+D.length+' linhas','ok');
 }
 function dlCSVall(){
-  var D=FIL;if(!D.length){toast('Nenhum dado','w');return;}
+  var D=FIL;if(!D.length){toast('Sem dados','w');return;}
   var f=document.getElementById('d-from').value||D[0].date,t=document.getElementById('d-to').value||D[D.length-1].date;
   var keys=['date','pm25','co2','temp','humidity','temp_max','temp_min','season','itp','ic'];
   var rows=[keys.join(',')].concat(D.map(function(d){return keys.map(function(k){return d[k]!=null?d[k]:'';}).join(',');})).join('\n');
-  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows);a.download='SOPRO_completo_'+f+'_'+t+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);toast('CSV completo: '+D.length+' registros','ok');
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows);a.download='SOPRO_completo_'+f+'_'+t+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);toast('CSV: '+D.length+' registros','ok');
 }
+function dlModelo(){var csv='date,pm25,co2,temp,humidity,temp_max,temp_min,season\n2024-09-14,45.2,462,33.1,58,40.5,25.3,Seca\n2024-01-15,6.3,448,31.5,82,38.2,25.1,Chuvosa\n';var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='sopro_modelo.csv';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);}
 
-/* ═══ TABLE ═══ */
-function renderTable(){
-  var tbody=document.getElementById('tb-body');if(!tbody)return;
-  if(!ALL.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:1rem;color:#9ca3af;font-style:italic">Nenhum dado. Faça upload do CSV.</td></tr>';return;}
-  var r=ALL.slice().reverse().slice(0,40);
-  tbody.innerHTML=r.map(function(d){
-    var p=d.pm25?parseFloat(d.pm25).toFixed(1):'—';
-    var rsk=d.pm25>60?'<span class="rsk rx">Péssima</span>':d.pm25>25?'<span class="rsk rh">Alta</span>':d.pm25>10?'<span class="rsk rm">Mod.</span>':'<span class="rsk rok">Boa</span>';
-    return'<tr><td>'+d.date+'</td><td>'+p+'</td><td>'+(d.co2||'—')+'</td><td>'+(d.temp?parseFloat(d.temp).toFixed(1):'—')+'</td><td>'+(d.humidity||'—')+'</td><td>'+(d.season||'—')+'</td><td>'+rsk+'</td></tr>';
-  }).join('');
-}
-
-/* ═══ HISTÓRICO DE UPLOADS ═══ */
-function renderHist(){
-  fetch(DB+'/sopro/uploads.json')
-    .then(function(r){return r.json();})
-    .then(function(data){
-      var tbody=document.getElementById('hist-body');if(!tbody)return;
-      if(!data){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:.8rem;color:#9ca3af;font-style:italic">Nenhum upload registrado.</td></tr>';return;}
-      var r=Object.values(data).sort(function(a,b){return b.ts-a.ts;}).slice(0,10);
-      tbody.innerHTML=r.map(function(u){
-        return'<tr><td>'+new Date(u.ts).toLocaleString('pt-BR')+'</td><td>'+u.user+'</td><td>'+u.records+'</td><td>'+u.period+'</td><td><span class="rsk rok">OK</span></td></tr>';
-      }).join('');
-    }).catch(function(){});
-}
-
-/* ═══ UPLOAD FILE ═══ */
+/* ══ UPLOAD FILE ══ */
 function doFile(file){
   if(!file)return;
+  if(!window._fbReady){toast('Firebase ainda não conectou. Aguarde.','w');return;}
   toast('Processando '+file.name+'…','ok');
   var reader=new FileReader();
   reader.onload=function(e){
@@ -702,63 +593,73 @@ function doFile(file){
       batch[row.date.replace(/-/g,'')]=row;ok++;
     }
     if(!ok){toast('Nenhum registro válido','e');return;}
-    setAlrt('⏳ Salvando '+ok+' registros no Firebase…','y');
-    /* Ask who is uploading */
-    var user=prompt('Seu nome (para registro do upload):','Ernandes Sobreira');
+    var user=prompt('Seu nome (para o histórico de uploads):','Ernandes Sobreira');
     if(!user)user='Anônimo';
-    var period=(function(){var dates=Object.values(batch).map(function(d){return d.date;}).sort();return dates[0]+' → '+dates[dates.length-1];})();
-    fetch(DB+'/sopro/daily.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(batch)})
-      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    var dates=Object.values(batch).map(function(d){return d.date;}).sort();
+    var period=dates[0]+' → '+dates[dates.length-1];
+    setAlrt('⏳ Salvando '+ok+' registros no Firebase…','y');
+    window._set(window._ref(window._db,'sopro/daily'),batch)
       .then(function(){
-        /* Save upload log */
         var logEntry={ts:Date.now(),user:user,records:ok,period:period,file:file.name};
-        fetch(DB+'/sopro/uploads/'+Date.now()+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry)});
+        window._set(window._ref(window._db,'sopro/uploads/'+Date.now()),logEntry);
         toast('✅ '+ok+' registros salvos!','ok');
         if(sk)toast('⚠ '+sk+' linhas ignoradas','w');
         loadData();
       })
-      .catch(function(e){toast('Erro: '+e.message,'e');setAlrt('❌ Erro ao salvar: '+e.message,'r');});
+      .catch(function(e){toast('Erro: '+e.message,'e');setAlrt('❌ Erro: '+e.message,'r');});
   };
   reader.readAsText(file);
 }
-
 function limpar(){
-  if(!confirm('Apagar TODOS os dados do Firebase?'))return;
-  fetch(DB+'/sopro/daily.json',{method:'DELETE'})
-    .then(function(){ALL=[];FIL=[];renderTable();setAlrt('🗑 Dados apagados. Faça upload de um novo CSV.','y');toast('Dados apagados','w');})
+  if(!confirm('Apagar TODOS os dados?'))return;
+  if(!window._fbReady){toast('Firebase não conectado','e');return;}
+  window._remove(window._ref(window._db,'sopro/daily'))
+    .then(function(){ALL=[];FIL=[];renderTable();setAlrt('🗑 Dados apagados.','y');toast('Dados apagados','w');})
     .catch(function(e){toast('Erro: '+e.message,'e');});
 }
-function dlModelo(){var csv='date,pm25,co2,temp,humidity,temp_max,temp_min,season\n2024-09-14,45.2,462,33.1,58,40.5,25.3,Seca\n2024-01-15,6.3,448,31.5,82,38.2,25.1,Chuvosa\n';var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='sopro_modelo.csv';document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);},300);}
 
-/* ═══ LOAD DATA ═══ */
+/* ══ LOAD DATA ══ */
 function loadData(){
-  setFBStatus(false,'⏳ Carregando…');
-  var ctrl=new AbortController();
-  var timer=setTimeout(function(){ctrl.abort();},8000);
-  fetch(DB+'/sopro/daily.json',{signal:ctrl.signal})
-    .then(function(r){clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(function(data){
-      setFBStatus(true,'● '+((data&&Object.keys(data).length)||0)+' registros');
-      if(!data){setAlrt('✅ Firebase conectado. Vá em Upload e envie seu CSV.','ok');ALL=[];FIL=[];return;}
-      ALL=Object.values(data).sort(function(a,b){return a.date.localeCompare(b.date);});
-      FIL=ALL.slice();
-      document.getElementById('d-to').value=ALL[ALL.length-1].date;
-      updateCards();renderPainel();renderTable();
-      setAlrt('✅ '+ALL.length+' registros carregados · '+ALL[0].date+' → '+ALL[ALL.length-1].date,'ok');
-    })
-    .catch(function(e){
-    var msg=e.name==='AbortError'?'Timeout — Firebase demorou demais. Tente recarregar.':e.message;
-    setFBStatus(false,'❌ Sem conexão');
-    setAlrt('❌ '+msg+' — Tente recarregar a página.','r');
-    toast(msg,'e');
+  if(!window._fbReady){return;}
+  setStatus(false,'⏳ Carregando…');
+  window._onValue(window._ref(window._db,'sopro/daily'),function(snap){
+    var data=snap.val();
+    if(!data){
+      setStatus(true,'● Firebase OK');
+      setAlrt('✅ Firebase conectado. Vá em Upload e envie seu CSV.','ok');
+      ALL=[];FIL=[];renderTable();return;
+    }
+    ALL=Object.values(data).sort(function(a,b){return a.date.localeCompare(b.date);});
+    FIL=ALL.slice();
+    document.getElementById('d-to').value=ALL[ALL.length-1].date;
+    setStatus(true,'● '+ALL.length+' registros');
+    updateCards();renderPainel();renderTable();
+    setAlrt('✅ '+ALL.length+' registros · '+ALL[0].date+' → '+ALL[ALL.length-1].date,'ok');
+    toast('✓ '+ALL.length+' registros carregados','ok');
   });
 }
 
-/* ═══ INIT ═══ */
+/* ══ INIT ══ */
+document.addEventListener('firebase-ready',function(){
+  window._fbReady=true;
+  setStatus(true,'● Firebase OK');
+  setAlrt('✅ Firebase conectado. Carregando dados…','ok');
+  var upDot=document.getElementById('up-dot'),upTxt=document.getElementById('up-txt');
+  if(upDot)upDot.style.background='#27ae60';
+  if(upTxt)upTxt.textContent='Firebase conectado — pronto para upload';
+  loadData();
+});
+
 window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('d-to').value=new Date().toISOString().slice(0,10);
-  loadData();
   var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){if(FIL.length)renderPainel();},250);});
+  /* Fallback se firebase-ready não disparar em 10s */
+  setTimeout(function(){
+    if(!window._fbReady){
+      setStatus(false,'❌ Firebase falhou');
+      setAlrt('❌ Firebase não conectou. Tente recarregar.','r');
+    }
+  },10000);
 });
 </script>
 </body>
