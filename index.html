@@ -729,11 +729,53 @@ function renderScatterCustom(){
     var rows=activeSeas.map(function(s){
       var pts=D.filter(function(d){return d.season===s&&d[xKey]!=null&&d[yKey]!=null;});
       if(!pts.length)return'';
-      var avgX=(pts.reduce(function(a,d){return a+parseFloat(d[xKey]);},0)/pts.length).toFixed(1);
-      var avgY=(pts.reduce(function(a,d){return a+parseFloat(d[yKey]);},0)/pts.length).toFixed(1);
+      var n=pts.length;
+      var xs=pts.map(function(d){return parseFloat(d[xKey]);});
+      var ys=pts.map(function(d){return parseFloat(d[yKey]);});
+      var avgX=xs.reduce(function(a,v){return a+v;},0)/n;
+      var avgY=ys.reduce(function(a,v){return a+v;},0)/n;
+      /* Pearson r */
+      var num=0,sdX=0,sdY=0;
+      for(var i=0;i<n;i++){num+=(xs[i]-avgX)*(ys[i]-avgY);sdX+=(xs[i]-avgX)*(xs[i]-avgX);sdY+=(ys[i]-avgY)*(ys[i]-avgY);}
+      var r=sdX&&sdY?num/Math.sqrt(sdX*sdY):0;
+      var r2=r*r;
+      /* t-test for p-value: t = r*sqrt(n-2)/sqrt(1-r2), df=n-2 */
+      var pval='—';
+      if(n>2){
+        var t=Math.abs(r)*Math.sqrt(n-2)/Math.sqrt(Math.max(1e-10,1-r2));
+        /* approximate p using Beta distribution incomplete function */
+        /* Simple approximation: use normal approx for large n, else t-table thresholds */
+        if(n>=30){
+          /* z = t * (1 - 1/(4*(n-2))) / sqrt(1 + t*t/(2*(n-2))) — normal approx */
+          var z=t*(1-1/(4*(n-2)))/Math.sqrt(1+t*t/(2*(n-2)));
+          /* P(Z>z)*2 — standard normal CDF approx */
+          var pone=Math.exp(-0.717*z-0.416*z*z);
+          var p2=Math.min(1,2*pone);
+          pval=p2<0.001?'<0.001':p2<0.01?p2.toFixed(3):p2.toFixed(3);
+        }else{
+          /* For small n use t-distribution thresholds (df=n-2) */
+          var df=n-2;
+          /* Critical values: p<0.05 if t>t_crit */
+          var tcrit05=df>=30?1.96:df>=20?2.09:df>=15?2.13:df>=10?2.23:df>=5?2.57:df>=3?3.18:12.7;
+          var tcrit01=df>=30?2.58:df>=20?2.85:df>=15?2.95:df>=10?3.17:df>=5?4.03:df>=3?5.84:63.7;
+          var tcrit001=df>=30?3.29:df>=20?3.85:df>=15?4.07:df>=10?4.59:df>=5?5.96:df>=3?12.9:636;
+          pval=t>tcrit001?'<0.001':t>tcrit01?'<0.01':t>tcrit05?'<0.05':'>0.05';
+        }
+      }
       var col=SC[s]||'#888';
       var slbl=s.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
-      return'<div style="margin-bottom:5px"><span style="display:inline-block;width:10px;height:10px;background:'+col+';border-radius:2px;margin-right:5px"></span><strong>'+slbl+'</strong> (n='+pts.length+')<br>  '+xLbl.split(' ')[0]+'='+avgX+' · '+yLbl.split(' ')[0]+'='+avgY+'</div>';
+      var rColor=Math.abs(r)>0.7?'#166534':Math.abs(r)>0.4?'#854d0e':'#9f1239';
+      var sig=pval==='<0.001'||pval==='<0.01'||pval==='<0.05';
+      return '<div style="margin-bottom:9px;padding:.5rem;background:#f8faff;border-radius:6px;border-left:3px solid '+col+'">'
+        +'<div style="font-weight:700;margin-bottom:3px"><span style="display:inline-block;width:10px;height:10px;background:'+col+';border-radius:2px;margin-right:5px;vertical-align:middle"></span>'+slbl+' <span style="font-weight:400;color:#6c7280">(n='+n+')</span></div>'
+        +'<div style="color:#374151">Média '+xLbl.split(' ')[0]+'='+avgX.toFixed(1)+' · Média '+yLbl.split(' ')[0]+'='+avgY.toFixed(1)+'</div>'
+        +'<div style="margin-top:3px">'
+        +'<span style="font-weight:700;color:'+rColor+'">r='+r.toFixed(3)+'</span>'
+        +' · <span style="font-weight:700;color:'+rColor+'">r²='+r2.toFixed(3)+'</span>'
+        +' · <span style="font-weight:700;color:'+(sig?'#166534':'#9f1239')+'">p'+pval+'</span>'
+        +(sig?' <span style="color:#166534;font-size:10px">✓ sig.</span>':' <span style="color:#9f1239;font-size:10px">ns</span>')
+        +'</div>'
+        +'</div>';
     });
     stats.innerHTML=rows.join('');
   }
