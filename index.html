@@ -123,11 +123,11 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
   <span id="fb-status">⏳ Aguardando Firebase…</span>
 </div>
 <nav class="nav">
-  <button class="on" onclick="go('painel',this)">Painel</button>
-  <button onclick="go('analise',this)">Análise</button>
-  <button onclick="go('ondas',this)">Ondas de Calor</button>
-  <button onclick="go('upload',this)">Upload</button>
-  <button onclick="go('sobre',this)">Sobre</button>
+  <button id="nb-painel" class="on" onclick="goTo('painel',this)">Painel</button>
+  <button id="nb-analise" onclick="goTo('analise',this)">Análise</button>
+  <button id="nb-ondas" onclick="goTo('ondas',this)">Ondas de Calor</button>
+  <button id="nb-upload" onclick="goTo('upload',this)">Upload</button>
+  <button id="nb-sobre" onclick="goTo('sobre',this)">Sobre</button>
 </nav>
 <div class="alrt y" id="alrt">⏳ Aguardando conexão com Firebase…</div>
 
@@ -278,15 +278,24 @@ function setStatus(ok,txt){
 }
 function setAlrt(msg,cls){var el=document.getElementById('alrt');el.textContent=msg;el.className='alrt '+(cls||'y');}
 
-function go(id,btn){
-  document.querySelectorAll('.pg').forEach(function(p){p.style.display='none';});
-  var pg=document.getElementById('pg-'+id);if(pg)pg.style.display='block';
-  document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('on');});
-  if(btn)btn.classList.add('on');
-  if(id==='analise')setTimeout(renderAnalise,80);
-  if(id==='ondas')setTimeout(renderOndas,80);
-  if(id==='upload'){setTimeout(renderTable,80);setTimeout(renderHist,80);}
-  window.scrollTo({top:0,behavior:'smooth'});
+function go(id,btn){goTo(id,btn);}
+function goTo(id,btn){
+  try{
+    var pgs=document.querySelectorAll('.pg');
+    for(var i=0;i<pgs.length;i++)pgs[i].style.display='none';
+    var pg=document.getElementById('pg-'+id);
+    if(pg)pg.style.display='block';
+    var btns=document.querySelectorAll('.nav button');
+    for(var i=0;i<btns.length;i++)btns[i].classList.remove('on');
+    if(btn)btn.classList.add('on');
+    if(id==='analise')setTimeout(function(){try{renderAnalise();}catch(e){}},80);
+    if(id==='ondas')setTimeout(function(){try{renderOndas();}catch(e){}},80);
+    if(id==='upload'){
+      setTimeout(function(){try{renderTable();}catch(e){}},80);
+      setTimeout(function(){try{renderHist();}catch(e){}},80);
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){console.error('goTo error:',e);}
 }
 function qf(days,btn){
   document.querySelectorAll('.qb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');
@@ -334,7 +343,7 @@ function hc(t,s){
 function bxStats(arr){
   if(!arr||!arr.length)return null;
   var s=arr.slice().sort(function(a,b){return a-b;});var n=s.length;
-  var q=function(f){return s[Math.max(0,Math.min(n-1,~~(n*f)));};
+  var q=function(f){return s[Math.max(0,Math.min(n-1,Math.floor(n*f)))];};
   var q1=q(.25),q3=q(.75),iqr=q3-q1;
   return{min:Math.max(s[0],q1-1.5*iqr),q1:q1,med:q(.5),q3:q3,max:Math.min(s[n-1],q3+1.5*iqr),mean:s.reduce(function(a,b){return a+b;})/n};
 }
