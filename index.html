@@ -210,7 +210,6 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
           <option value="pm25">PM₂.₅ (µg/m³)</option>
           <option value="co2">CO₂ (ppm)</option>
           <option value="humidity">Umidade (%)</option>
-          <option value="itp">ITP</option>
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:5px">
@@ -220,7 +219,6 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
           <option value="temp">Temperatura (°C)</option>
           <option value="co2">CO₂ (ppm)</option>
           <option value="humidity">Umidade (%)</option>
-          <option value="itp">ITP</option>
         </select>
       </div>
     </div>
@@ -242,6 +240,57 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
   <div class="g2" style="margin-top:10px">
     <div class="cc"><div class="cc-h"><div class="cc-t">Regime por Estação (%)</div><div class="acts"><button class="act" onclick="dlPNG('cw-qbar','Regime')">⬇ PNG</button></div></div><div class="cw" id="cw-qbar" style="height:240px"></div></div>
     <div class="cc" id="sc-stats-box"><div class="cc-h"><div class="cc-t">Estatísticas por Estação</div></div><div id="sc-stats" style="padding:.5rem;font-size:11px;font-family:monospace;line-height:1.8"></div></div>
+  </div>
+
+  <div class="sh" style="margin-top:1.2rem"><h3>ITP — Análise de Correlação</h3><hr></div>
+  <div class="desc"><strong>ITP</strong> varia de negativo (frio e limpo) a positivo alto (quente e poluído). Os gráficos abaixo mostram como o ITP se relaciona com cada variável ambiental por estação.</div>
+  <div class="g2">
+    <div class="cc">
+      <div class="cc-h">
+        <div><div class="cc-t">ITP × Variável</div><div class="cc-s">Selecione a variável do eixo X</div></div>
+        <div class="acts"><button class="act" onclick="dlPNG('cw-itp-sc','ITP_scatter')">⬇ PNG</button></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.5rem;align-items:center">
+        <label style="font-size:11px;font-weight:700;color:#8e44ad">Eixo X:</label>
+        <select id="itp-sc-x" onchange="renderITPScatter()" style="border:1.5px solid #8e44ad;border-radius:5px;padding:4px 7px;font-size:11px;background:#faf5ff;color:#1a1d23;font-family:inherit">
+          <option value="temp">Temperatura (°C)</option>
+          <option value="pm25">PM₂.₅ (µg/m³)</option>
+          <option value="co2">CO₂ (ppm)</option>
+          <option value="humidity">Umidade (%)</option>
+        </select>
+      </div>
+      <div class="cw" id="cw-itp-sc" style="height:260px"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-h"><div class="cc-t">Estatísticas ITP por Estação</div></div>
+      <div id="itp-sc-stats" style="padding:.5rem;font-size:11px;line-height:1.8"></div>
+    </div>
+  </div>
+
+  <div class="sh" style="margin-top:1.2rem"><h3>Índice de Calor (IC) — Análise de Correlação</h3><hr></div>
+  <div class="desc"><strong>IC</strong> = sensação térmica real combinando temperatura e umidade (Steadman/NWS). IC&gt;27°C = Cautela · IC&gt;32°C = Extrema Cautela · IC&gt;41°C = Perigo.</div>
+  <div class="g2">
+    <div class="cc">
+      <div class="cc-h">
+        <div><div class="cc-t">IC × Variável</div><div class="cc-s">Selecione a variável do eixo X</div></div>
+        <div class="acts"><button class="act" onclick="dlPNG('cw-ic-sc','IC_scatter')">⬇ PNG</button></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.5rem;align-items:center">
+        <label style="font-size:11px;font-weight:700;color:#e67e22">Eixo X:</label>
+        <select id="ic-sc-x" onchange="renderICScatter()" style="border:1.5px solid #e67e22;border-radius:5px;padding:4px 7px;font-size:11px;background:#fff8f0;color:#1a1d23;font-family:inherit">
+          <option value="temp">Temperatura (°C)</option>
+          <option value="humidity">Umidade (%)</option>
+          <option value="pm25">PM₂.₅ (µg/m³)</option>
+          <option value="co2">CO₂ (ppm)</option>
+          <option value="itp">ITP</option>
+        </select>
+      </div>
+      <div class="cw" id="cw-ic-sc" style="height:260px"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-h"><div class="cc-t">Estatísticas IC por Estação</div></div>
+      <div id="ic-sc-stats" style="padding:.5rem;font-size:11px;line-height:1.8"></div>
+    </div>
   </div>
 </div>
 
@@ -280,6 +329,90 @@ footer{background:#12181f;border-top:1px solid #1e2a38;padding:.7rem 1rem;displa
     <div class="tw"><table><thead><tr><th>Data/Hora</th><th>Responsável</th><th>Registros</th><th>Período</th></tr></thead><tbody id="hist-body"><tr><td colspan="4" style="text-align:center;padding:.8rem;color:#9ca3af">Aguardando…</td></tr></tbody></table></div>
     <div class="sh" style="margin-top:.8rem"><h3>Últimos Registros</h3><hr></div>
     <div class="tw"><table><thead><tr><th>Data</th><th>PM₂.₅</th><th>CO₂</th><th>Temp</th><th>UR%</th><th>Estação</th><th>Qualidade</th></tr></thead><tbody id="tb-body"><tr><td colspan="7" style="text-align:center;padding:.8rem;color:#9ca3af">Aguardando dados…</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- MÉTODOS -->
+<div class="pg" id="pg-metodos">
+  <div style="max-width:860px;margin:.5rem auto">
+    <div class="sh"><h3>Métodos de Cálculo</h3><hr></div>
+    <p style="font-size:11.5px;color:#6c7280;margin-bottom:1rem">Todos os índices são calculados automaticamente no carregamento dos dados. Baseados em metodologias científicas validadas.</p>
+
+    <!-- ITP -->
+    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;border-left:4px solid #8e44ad">
+      <div style="font-size:.9rem;font-weight:800;color:#8e44ad;margin-bottom:.4rem">ITP — Índice Termopoliuidor</div>
+      <div style="background:#faf5ff;border-radius:6px;padding:.6rem .8rem;font-family:monospace;font-size:12px;margin-bottom:.6rem">ITP = (Z_T + Z_PM) / √2</div>
+      <div style="font-size:11.5px;line-height:1.85;color:#374151">
+        Onde <strong>Z_T = (T − 30) / 5</strong> e <strong>Z_PM = (PM₂.₅ − 15) / 18</strong> são os z-scores padronizados.<br>
+        Os parâmetros de referência (média=30°C, DP=5 para temperatura; média=15 µg/m³, DP=18 para PM₂.₅) representam condições típicas do Pantanal Norte.<br>
+        A divisão por √2 normaliza o índice composto.<br>
+        <strong>Interpretação:</strong> ITP &lt; 0 = favorável · 0–1 = neutro · 1–2 = <span style="color:#e8a020">Alerta</span> · ≥ 2 = <span style="color:#c0392b">Crítico</span><br>
+        <strong>Referência:</strong> Oliveira Junior et al. (2024). Pantanal air quality monitoring. UNEMAT/PPGCA.
+      </div>
+    </div>
+
+    <!-- IC -->
+    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;border-left:4px solid #e67e22">
+      <div style="font-size:.9rem;font-weight:800;color:#e67e22;margin-bottom:.4rem">IC — Índice de Calor (Heat Index)</div>
+      <div style="background:#fff8f0;border-radius:6px;padding:.6rem .8rem;font-family:monospace;font-size:11px;margin-bottom:.6rem">IC = T + 0,348 × (UR × 6,1 × e^(17,27T/(237,3+T))) − 4,0</div>
+      <div style="font-size:11.5px;line-height:1.85;color:#374151">
+        Onde <strong>T</strong> = temperatura do ar (°C) e <strong>UR</strong> = umidade relativa (0–1).<br>
+        Baseado na equação de Steadman (1979) adaptada pelo National Weather Service (NWS/NOAA) para regiões tropicais.<br>
+        <strong>Interpretação (NWS):</strong> IC &lt; 27°C = confortável · 27–32°C = <span style="color:#e8a020">Cautela</span> · 32–41°C = <span style="color:#e67e22">Extrema Cautela</span> · &gt; 41°C = <span style="color:#c0392b">Perigo</span><br>
+        <strong>Referência:</strong> Steadman, R.G. (1979). The assessment of sultriness. J. Appl. Meteorol., 18, 861–873.
+      </div>
+    </div>
+
+    <!-- PM2.5 CONAMA -->
+    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;border-left:4px solid #c0392b">
+      <div style="font-size:.9rem;font-weight:800;color:#c0392b;margin-bottom:.4rem">PM₂.₅ — Padrões CONAMA 491/2022</div>
+      <div style="background:#fff1f2;border-radius:6px;padding:.6rem .8rem;font-size:11.5px;margin-bottom:.6rem">
+        <strong>PI1 = 15 µg/m³</strong> (Padrão Intermediário 1) · <strong>PI2 = 25 µg/m³</strong> (Padrão Intermediário 2)<br>
+        Meta final OMS = 5 µg/m³ (24h) · Padrão anual Brasil = 15 µg/m³
+      </div>
+      <div style="font-size:11.5px;line-height:1.85;color:#374151">
+        A Resolução CONAMA 491/2022 estabelece padrões de qualidade do ar para o Brasil alinhados progressivamente com as diretrizes da OMS (2021).<br>
+        <strong>Classes de qualidade:</strong> Boa (&lt;10) · Moderada (10–25) · Alta (25–60) · Péssima (&gt;60 µg/m³)<br>
+        <strong>Referência:</strong> Brasil. CONAMA. Resolução n° 491, de 19 de novembro de 2018 (atualizada 2022).
+      </div>
+    </div>
+
+    <!-- Anomalia Térmica -->
+    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;border-left:4px solid #1d5fa8">
+      <div style="font-size:.9rem;font-weight:800;color:#1d5fa8;margin-bottom:.4rem">Anomalia Térmica — Desvio da Climatologia</div>
+      <div style="background:#f0f7ff;border-radius:6px;padding:.6rem .8rem;font-family:monospace;font-size:12px;margin-bottom:.6rem">ΔT = T_observada − T_climatológica(mês)</div>
+      <div style="font-size:11.5px;line-height:1.85;color:#374151">
+        A climatologia mensal utilizada (°C): Jan=31 · Fev=31 · Mar=32 · Abr=31 · Mai=29 · Jun=27 · Jul=26 · Ago=28 · Set=30 · Out=32 · Nov=32 · Dez=31.<br>
+        Valores baseados na normal climatológica 1991–2020 do INMET para Cáceres-MT (estação 83405).<br>
+        <strong>Onda de calor:</strong> ΔT ≥ +3°C por ≥ 5 dias consecutivos (critério WMO).<br>
+        <strong>Referência:</strong> INMET (2022). Normais Climatológicas 1991–2020. Brasília: MAPA/INMET.
+      </div>
+    </div>
+
+    <!-- Correlação de Pearson -->
+    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;border-left:4px solid #27ae60">
+      <div style="font-size:.9rem;font-weight:800;color:#27ae60;margin-bottom:.4rem">Correlação de Pearson — r e r²</div>
+      <div style="background:#f0fff4;border-radius:6px;padding:.6rem .8rem;font-family:monospace;font-size:11px;margin-bottom:.6rem">r = Σ[(xᵢ−x̄)(yᵢ−ȳ)] / √[Σ(xᵢ−x̄)² · Σ(yᵢ−ȳ)²]</div>
+      <div style="font-size:11.5px;line-height:1.85;color:#374151">
+        O coeficiente r varia de −1 (correlação negativa perfeita) a +1 (correlação positiva perfeita). r²indica a proporção da variância de Y explicada por X.<br>
+        <strong>Magnitude:</strong> |r| &lt; 0,4 = fraca · 0,4–0,7 = moderada · &gt; 0,7 = forte<br>
+        A significância estatística é testada com distribuição t (df = n−2).<br>
+        <strong>Valor de p:</strong> calculado pelo teste t bilateral: t = r√(n−2) / √(1−r²)
+      </div>
+    </div>
+
+    <!-- Boxplot -->
+    <div style="background:#fff;border:1px solid #e1e4e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;border-left:4px solid #374151">
+      <div style="font-size:.9rem;font-weight:800;color:#374151;margin-bottom:.4rem">Boxplot — Estatísticas de Resumo</div>
+      <div style="background:#f8faff;border-radius:6px;padding:.6rem .8rem;font-size:11.5px;margin-bottom:.6rem">
+        Q1 = percentil 25% · Mediana = percentil 50% · Q3 = percentil 75%<br>
+        IQR = Q3 − Q1 · Bigodes = Q1 − 1,5×IQR até Q3 + 1,5×IQR
+      </div>
+      <div style="font-size:11.5px;line-height:1.85;color:#374151">
+        Os boxplots exibem a distribuição real dos dados sem suposição de normalidade. Pontos além dos bigodes são outliers.<br>
+        O círculo vazio indica a <strong>média aritmética</strong>. A linha grossa indica a <strong>mediana</strong>.
+      </div>
+    </div>
   </div>
 </div>
 
@@ -661,6 +794,8 @@ function renderAnalise(){
   var Da=D.map(function(d){return Object.assign({},d,{itp:d.itp!=null?d.itp:calcITP(d)});});
   drawTS(Da,'itp','#1d5fa8','cw-itp-ts',[{v:1,c:'#e8a020',lbl:'Alerta'},{v:2,c:'#c0392b',lbl:'Crítico'}]);
   // drag-select already added by drawTS
+  renderITPScatter();
+  renderICScatter();
   var itpBP=SEAS.map(function(s){return bxStats(Da.filter(function(d){return d.season===s;}).map(function(d){return d.itp;}));});
   drawBoxplot(SEAS,itpBP,SEAS.map(function(s){return SC[s]||'#888';}), 'cw-itp-bp','ITP',null,null,[{v:1,c:'#e8a020',lbl:'Alerta'},{v:2,c:'#c0392b',lbl:'Crítico'}]);
   var cls=['ITP<−1','−1–0','0–1','1–2','≥2'],clsC=['#1d5fa8','#aed6f1','#82e0aa','#e8a020','#c0392b'];
@@ -775,6 +910,151 @@ function renderScatterCustom(){
         +' · <span style="font-weight:700;color:'+(sig?'#166534':'#9f1239')+'">p'+pval+'</span>'
         +(sig?' <span style="color:#166534;font-size:10px">✓ sig.</span>':' <span style="color:#9f1239;font-size:10px">ns</span>')
         +'</div>'
+        +'</div>';
+    });
+    stats.innerHTML=rows.join('');
+  }
+}
+function renderITPScatter(){
+  var D=FIL;if(!D.length)return;
+  var xKey=document.getElementById('itp-sc-x')&&document.getElementById('itp-sc-x').value||'temp';
+  var xLbl=VAR_LABELS[xKey]||xKey;
+  var datasets=SEAS.map(function(s){
+    return{label:s.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C'),
+      color:SC[s]||'#888',
+      pts:D.filter(function(d){return d.season===s&&d[xKey]!=null&&d.itp!=null;})
+          .map(function(d){return{x:parseFloat(d[xKey]),y:d.itp};})
+          .slice(0,150)};
+  });
+  /* Use drawScatterITP which supports negative Y */
+  drawScatterITP(datasets,xLbl,'ITP','cw-itp-sc');
+  /* Stats */
+  var stats=document.getElementById('itp-sc-stats');
+  if(stats){
+    var rows=SEAS.map(function(s){
+      var pts=D.filter(function(d){return d.season===s&&d[xKey]!=null&&d.itp!=null;});
+      if(!pts.length)return'';
+      var n=pts.length;
+      var xs=pts.map(function(d){return parseFloat(d[xKey]);});
+      var ys=pts.map(function(d){return d.itp;});
+      var avgX=xs.reduce(function(a,v){return a+v;},0)/n;
+      var avgY=ys.reduce(function(a,v){return a+v;},0)/n;
+      var num=0,sdX=0,sdY=0;
+      for(var i=0;i<n;i++){num+=(xs[i]-avgX)*(ys[i]-avgY);sdX+=(xs[i]-avgX)*(xs[i]-avgX);sdY+=(ys[i]-avgY)*(ys[i]-avgY);}
+      var r=sdX&&sdY?num/Math.sqrt(sdX*sdY):0;
+      var r2=r*r;
+      var pval='—';
+      if(n>2){
+        var t=Math.abs(r)*Math.sqrt(n-2)/Math.sqrt(Math.max(1e-10,1-r2));
+        if(n>=30){var z=t*(1-1/(4*(n-2)))/Math.sqrt(1+t*t/(2*(n-2)));var pone=Math.exp(-0.717*z-0.416*z*z);pval=Math.min(1,2*pone)<0.001?'<0.001':Math.min(1,2*pone)<0.01?'<0.01':Math.min(1,2*pone)<0.05?'<0.05':'>0.05';}
+        else{var df=n-2;var tcrit05=df>=10?2.23:df>=5?2.57:3.18;var tcrit01=df>=10?3.17:df>=5?4.03:5.84;var tcrit001=df>=10?4.59:df>=5?5.96:12.9;pval=t>tcrit001?'<0.001':t>tcrit01?'<0.01':t>tcrit05?'<0.05':'>0.05';}
+      }
+      var col=SC[s]||'#888';
+      var slbl=s.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
+      var rC=Math.abs(r)>0.7?'#166534':Math.abs(r)>0.4?'#854d0e':'#9f1239';
+      var sig=pval!=='>0.05'&&pval!=='—';
+      return'<div style="margin-bottom:7px;padding:.45rem .6rem;background:#faf5ff;border-radius:6px;border-left:3px solid '+col+'">'
+        +'<strong><span style="display:inline-block;width:9px;height:9px;background:'+col+';border-radius:2px;margin-right:4px;vertical-align:middle"></span>'+slbl+'</strong> <span style="color:#6c7280">(n='+n+')</span><br>'
+        +'Média ITP='+avgY.toFixed(2)+' · Média '+xLbl.split(' ')[0]+'='+avgX.toFixed(1)+'<br>'
+        +'<span style="color:'+rC+'">r='+r.toFixed(3)+' · r²='+r2.toFixed(3)+'</span>'
+        +' · <span style="color:'+(sig?'#166534':'#9f1239')+'">p'+pval+(sig?' ✓':' ns')+'</span>'
+        +'</div>';
+    });
+    stats.innerHTML=rows.join('');
+  }
+}
+
+function drawScatterITP(datasets,xLbl,yLbl,wrapId){
+  var w=W(wrapId),h=H(wrapId),legH=28,svgH=h+legH;
+  var pad={l:52,r:14,t:12,b:36},cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
+  var allX=[],allY=[];
+  datasets.forEach(function(ds){ds.pts.forEach(function(p){allX.push(p.x);allY.push(p.y);});});
+  if(!allX.length)return;
+  var xlo=Math.min.apply(null,allX)*.98,xhi=Math.max.apply(null,allX)*1.02;
+  var ylo=Math.min.apply(null,allY)-0.3,yhi=Math.max.apply(null,allY)+0.3;
+  if(ylo>-0.5)ylo=-0.5;/* always show zero crossing */
+  var toX=function(v){return pad.l+cW*(v-xlo)/(xhi-xlo||1);};
+  var toY=function(v){return pad.t+cH*(1-(v-ylo)/(yhi-ylo||1));};
+  /* Zero line */
+  var y0=toY(0);
+  var zeroLine='<line x1="'+pad.l+'" y1="'+y0.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y0.toFixed(1)+'" stroke="#374151" stroke-width="1.5" stroke-dasharray="4,3"/>';
+  /* ITP thresholds */
+  var y1=toY(1),y2=toY(2);
+  var refLines='<line x1="'+pad.l+'" y1="'+y1.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y1.toFixed(1)+'" stroke="#e8a020" stroke-width="1.3" stroke-dasharray="5,3"/>'
+    +'<text x="'+(pad.l+cW+2)+'" y="'+(y1+4).toFixed(1)+'" font-size="9" fill="#e8a020">Alerta</text>'
+    +'<line x1="'+pad.l+'" y1="'+y2.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y2.toFixed(1)+'" stroke="#c0392b" stroke-width="1.3" stroke-dasharray="5,3"/>'
+    +'<text x="'+(pad.l+cW+2)+'" y="'+(y2+4).toFixed(1)+'" font-size="9" fill="#c0392b">Crítico</text>';
+  var pts='';
+  datasets.forEach(function(ds){ds.pts.forEach(function(p){pts+='<circle cx="'+toX(p.x).toFixed(1)+'" cy="'+toY(p.y).toFixed(1)+'" r="3.5" fill="'+ds.color+'" opacity=".65"/>';});});
+  /* Grid */
+  var g='',yt='';
+  for(var i=0;i<=5;i++){var v=ylo+(yhi-ylo)*i/5,y=toY(v);g+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="#e4e8ee" stroke-width="1"/>';yt+='<text x="'+(pad.l-4)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#6c7280">'+v.toFixed(1)+'</text>';}
+  var xt='';for(var i=0;i<=4;i++){var v=xlo+(xhi-xlo)*i/4,x=toX(v);xt+='<text x="'+x.toFixed(1)+'" y="'+(pad.t+cH+13).toFixed(1)+'" text-anchor="middle" font-size="10" fill="#6c7280">'+v.toFixed(0)+'</text>';}
+  var ax='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(pad.t+cH)+'" stroke="#b0b8c4" stroke-width="1.4"/><line x1="'+pad.l+'" y1="'+(pad.t+cH)+'" x2="'+(pad.l+cW)+'" y2="'+(pad.t+cH)+'" stroke="#b0b8c4" stroke-width="1.4"/>';
+  var leg='';datasets.forEach(function(ds,i){var cols=2,col=i%cols,row=~~(i/cols),lx=pad.l+col*(cW/cols),ly=h+4+row*14;leg+='<circle cx="'+(lx+5)+'" cy="'+(ly+5)+'" r="4" fill="'+ds.color+'" opacity=".8"/><text x="'+(lx+13)+'" y="'+(ly+9)+'" font-size="9.5" fill="#374151">'+ds.label+'</text>';});
+  var yTitle='<text transform="translate(12,'+(pad.t+cH/2).toFixed(1)+') rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">'+yLbl+'</text>';
+  var xTitle='<text x="'+(pad.l+cW/2).toFixed(1)+'" y="'+(pad.t+cH+26).toFixed(1)+'" text-anchor="middle" font-size="11" fill="#374151">'+xLbl+'</text>';
+  putSVG(wrapId,g+zeroLine+refLines+pts+ax+xt+yt+yTitle+xTitle+leg,w,svgH);
+}
+
+function renderICScatter(){
+  var D=FIL;if(!D.length)return;
+  var xKey=document.getElementById('ic-sc-x')&&document.getElementById('ic-sc-x').value||'temp';
+  var xLbl=VAR_LABELS[xKey]||xKey;
+  var datasets=SEAS.map(function(s){
+    return{label:s.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C'),
+      color:SC[s]||'#888',
+      pts:D.filter(function(d){return d.season===s&&d[xKey]!=null&&d.ic!=null;})
+          .map(function(d){return{x:parseFloat(d[xKey]),y:d.ic};})
+          .slice(0,150)};
+  });
+  var allX=[],allY=[];
+  datasets.forEach(function(ds){ds.pts.forEach(function(p){allX.push(p.x);allY.push(p.y);});});
+  if(!allX.length)return;
+  var xlo=Math.min.apply(null,allX)*.98,xhi=Math.max.apply(null,allX)*1.02;
+  var ylo=Math.min.apply(null,allY)-1,yhi=Math.max.apply(null,allY)+1;
+  var w=W('cw-ic-sc'),h=H('cw-ic-sc'),legH=28,svgH=h+legH;
+  var pad={l:52,r:50,t:12,b:36},cW=w-pad.l-pad.r,cH=h-pad.t-pad.b;
+  var toX=function(v){return pad.l+cW*(v-xlo)/(xhi-xlo||1);};
+  var toY=function(v){return pad.t+cH*(1-(v-ylo)/(yhi-ylo||1));};
+  var refs=[{v:27,c:'#e8a020',l:'Cautela'},{v:32,c:'#e67e22',l:'Ext.Caut.'},{v:41,c:'#c0392b',l:'Perigo'}];
+  var refLines='';
+  refs.forEach(function(r){var y=toY(r.v);refLines+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="'+r.c+'" stroke-width="1.3" stroke-dasharray="5,3"/><text x="'+(pad.l+cW+2)+'" y="'+(y+4).toFixed(1)+'" font-size="9" fill="'+r.c+'">'+r.l+'</text>';});
+  var pts='';
+  datasets.forEach(function(ds){ds.pts.forEach(function(p){pts+='<circle cx="'+toX(p.x).toFixed(1)+'" cy="'+toY(p.y).toFixed(1)+'" r="3.5" fill="'+ds.color+'" opacity=".65"/>';});});
+  var g='',yt='';
+  for(var i=0;i<=5;i++){var v=ylo+(yhi-ylo)*i/5,y=toY(v);g+='<line x1="'+pad.l+'" y1="'+y.toFixed(1)+'" x2="'+(pad.l+cW)+'" y2="'+y.toFixed(1)+'" stroke="#e4e8ee" stroke-width="1"/>';yt+='<text x="'+(pad.l-4)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#6c7280">'+v.toFixed(0)+'</text>';}
+  var xt='';for(var i=0;i<=4;i++){var v=xlo+(xhi-xlo)*i/4,x=toX(v);xt+='<text x="'+x.toFixed(1)+'" y="'+(pad.t+cH+13).toFixed(1)+'" text-anchor="middle" font-size="10" fill="#6c7280">'+v.toFixed(0)+'</text>';}
+  var ax='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(pad.t+cH)+'" stroke="#b0b8c4" stroke-width="1.4"/><line x1="'+pad.l+'" y1="'+(pad.t+cH)+'" x2="'+(pad.l+cW)+'" y2="'+(pad.t+cH)+'" stroke="#b0b8c4" stroke-width="1.4"/>';
+  var leg='';datasets.forEach(function(ds,i){var cols=2,col=i%cols,row=~~(i/cols),lx=pad.l+col*(cW/cols),ly=h+4+row*14;leg+='<circle cx="'+(lx+5)+'" cy="'+(ly+5)+'" r="4" fill="'+ds.color+'" opacity=".8"/><text x="'+(lx+13)+'" y="'+(ly+9)+'" font-size="9.5" fill="#374151">'+ds.label+'</text>';});
+  var yT='<text transform="translate(12,'+(pad.t+cH/2).toFixed(1)+') rotate(-90)" text-anchor="middle" font-size="11" fill="#374151">IC (°C)</text>';
+  var xT='<text x="'+(pad.l+cW/2).toFixed(1)+'" y="'+(pad.t+cH+26).toFixed(1)+'" text-anchor="middle" font-size="11" fill="#374151">'+xLbl+'</text>';
+  putSVG('cw-ic-sc',g+refLines+pts+ax+xt+yt+yT+xT+leg,w,svgH);
+  /* Stats */
+  var stats=document.getElementById('ic-sc-stats');
+  if(stats){
+    var rows=SEAS.map(function(s){
+      var pts2=D.filter(function(d){return d.season===s&&d[xKey]!=null&&d.ic!=null;});
+      if(!pts2.length)return'';
+      var n=pts2.length;
+      var xs=pts2.map(function(d){return parseFloat(d[xKey]);});
+      var ys=pts2.map(function(d){return d.ic;});
+      var avgX=xs.reduce(function(a,v){return a+v;},0)/n;
+      var avgY=ys.reduce(function(a,v){return a+v;},0)/n;
+      var num=0,sdX=0,sdY=0;
+      for(var i=0;i<n;i++){num+=(xs[i]-avgX)*(ys[i]-avgY);sdX+=(xs[i]-avgX)*(xs[i]-avgX);sdY+=(ys[i]-avgY)*(ys[i]-avgY);}
+      var r=sdX&&sdY?num/Math.sqrt(sdX*sdY):0;
+      var r2=r*r;
+      var pval='>0.05';
+      if(n>2){var t=Math.abs(r)*Math.sqrt(n-2)/Math.sqrt(Math.max(1e-10,1-r2));if(n>=30){var z=t*(1-1/(4*(n-2)))/Math.sqrt(1+t*t/(2*(n-2)));var p2=Math.min(1,2*Math.exp(-0.717*z-0.416*z*z));pval=p2<0.001?'<0.001':p2<0.01?'<0.01':p2<0.05?'<0.05':'>0.05';}else{var df=n-2;var tc05=df>=10?2.23:2.57;var tc01=df>=10?3.17:4.03;var tc001=df>=10?4.59:5.96;pval=t>tc001?'<0.001':t>tc01?'<0.01':t>tc05?'<0.05':'>0.05';}}
+      var col=SC[s]||'#888';var slbl=s.replace('Trans.Chuva->Seca','T.C→S').replace('Trans.Seca->Chuva','T.S→C');
+      var rC=Math.abs(r)>0.7?'#166534':Math.abs(r)>0.4?'#854d0e':'#9f1239';
+      var sig=pval!=='>0.05';
+      return'<div style="margin-bottom:7px;padding:.45rem .6rem;background:#fff8f0;border-radius:6px;border-left:3px solid '+col+'">'
+        +'<strong><span style="display:inline-block;width:9px;height:9px;background:'+col+';border-radius:2px;margin-right:4px;vertical-align:middle"></span>'+slbl+'</strong> <span style="color:#6c7280">(n='+n+')</span><br>'
+        +'Média IC='+avgY.toFixed(1)+'°C · Média '+xLbl.split(' ')[0]+'='+avgX.toFixed(1)+'<br>'
+        +'<span style="color:'+rC+'">r='+r.toFixed(3)+' · r²='+r2.toFixed(3)+'</span>'
+        +' · <span style="color:'+(sig?'#166534':'#9f1239')+'">p'+pval+(sig?' ✓':' ns')+'</span>'
         +'</div>';
     });
     stats.innerHTML=rows.join('');
